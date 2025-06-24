@@ -53,8 +53,8 @@ public class UserController {
 
     /*全部查询*/
     @GetMapping("/selectAll")
-    public Result selectAll(String username){
-        List<User> list =userService.selectAll(username);
+    public Result selectAll(String username, String role){
+        List<User> list =userService.selectAll(username, role);
         return Result.success(list);
     }
 
@@ -62,9 +62,10 @@ public class UserController {
     @GetMapping("/selectPage")
     public Result selectPage(
             String username,
+            String role,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize){
-        PageInfo<User> pageInfo=userService.selectPage(username,pageNum,pageSize);
+        PageInfo<User> pageInfo=userService.selectPage(username,role,pageNum,pageSize);
         return Result.success(pageInfo);
     }
 }

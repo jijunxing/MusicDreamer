@@ -2,7 +2,7 @@
   <div>
 
     <div class="card" style="margin-bottom: 10px;">
-      <el-input prefix-icon="Search" style="width: 300px; margin-right: 10px" placeholder="请输入名称查询" v-model="data.name"></el-input>
+      <el-input prefix-icon="Search" style="width: 300px; margin-right: 10px" placeholder="请输入用户名查询" v-model="data.username"></el-input>
       <el-button type="primary" @click="load">查询</el-button>
       <el-button type="info" style="margin: 0 10px" @click="reset">重置</el-button>
     </div>
@@ -12,15 +12,19 @@
         <el-button type="primary" @click="handleAdd">新增</el-button>
       </div>
       <el-table :data="data.tableData" style="width: 100%">
-        <el-table-column prop="id" label="序号" width="70"/>
+        <el-table-column prop="id" label="ID" width="70"/>
         <el-table-column prop="username" label="用户名"/>
         <el-table-column prop="avatar" label="头像">
           <template v-slot="scope">
             <img v-if="scope.row.avatar" :src="scope.row.avatar" alt="" style="width: 50px; height: 50px; border-radius: 50%">
           </template>
         </el-table-column>
-        <el-table-column prop="role" label="角色"/>
-        <el-table-column prop="sex" label="性别"/>
+        <el-table-column label="状态">
+          <template #default="scope">
+            <el-tag type="primary" v-if="scope.row.activation === 0">{{"冻结"}}</el-tag>
+            <el-tag type="success" v-if="scope.row.activation === 1">{{"激活"}}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="phone" label="手机号"/>
         <el-table-column prop="email" label="邮箱"/>
         <el-table-column label="操作" width="180">
@@ -38,11 +42,8 @@
 
     <el-dialog v-model="data.formVisible" title="信息" width="25%" destroy-on-close>
       <el-form :model="data.form" label-width="100px" style="padding-right: 50px">
-        <el-form-item label="账号">
+        <el-form-item label="用户名">
           <el-input v-model="data.form.username" autocomplete="off" :disabled="!!data.form.id" />
-        </el-form-item>
-        <el-form-item label="名称">
-          <el-input v-model="data.form.name" autocomplete="off" />
         </el-form-item>
         <el-form-item label="头像">
           <el-upload action="http://localhost:9090/files/upload" :on-success="handleFileUpload">
@@ -50,13 +51,25 @@
           </el-upload>
         </el-form-item>
         <el-form-item label="性别">
-          <el-radio-group v-model="data.form.sex">
-            <el-radio label="男"></el-radio>
-            <el-radio label="女"></el-radio>
-          </el-radio-group>
+          <el-select
+              v-model="data.form.sex"
+              filterable
+              placeholder="Select"
+              style="width: 240px"
+          >
+            <el-option
+                v-for="item in options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="手机号">
           <el-input v-model="data.form.phone" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="data.form.email" autocomplete="off" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -84,15 +97,18 @@ const data = reactive({
   pageSize: 5,  // 每页的个数
   formVisible: false,
   form: {},
-  name: ''
+  username: '',
+  sex: '',
+  role: 'USER'
 })
 
 const load = () => {
   request.get('/user/selectPage', {
     params:{
+      username: data.username,
+      role: data.role,
       pageNum: data.pageNum,
-      pageSize: data.pageSize,
-      name: data.name
+      pageSize: data.pageSize
     }
   }).then(res => {
     data.tableData = res.data?.list || []
@@ -103,7 +119,7 @@ const load = () => {
 load()
 
 const reset = () => {
-  data.name = null;
+  data.username = null;
   load();
 }
 
@@ -152,5 +168,20 @@ const del = (id) => {
 const handleFileUpload = (file) => {
   data.form.avatar = file.data
 }
+
+const options = [
+  {
+    value: 'male',
+    label: '男',
+  },
+  {
+    value: 'female',
+    label: '女',
+  },
+  {
+    value: 'secret',
+    label: '保密',
+  }
+]
 
 </script>

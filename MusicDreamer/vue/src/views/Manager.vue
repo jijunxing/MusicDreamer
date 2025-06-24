@@ -34,7 +34,7 @@
             :default-active="$route.path"
             :default-openeds="['/home', '2']"
         >
-          <el-menu-item index="/home">
+          <el-menu-item index="/admin/home">
             <el-icon><HomeFilled /></el-icon>
             <span>系统首页</span>
           </el-menu-item>
@@ -43,11 +43,11 @@
               <el-icon><OfficeBuilding /></el-icon>
               <span>系统管理</span>
             </template>
-            <el-menu-item index="/logs">
+            <el-menu-item index="/admin/logs">
               <el-icon><Memo /></el-icon>
               <span>日志信息</span>
             </el-menu-item>
-            <el-menu-item index="/notice">
+            <el-menu-item index="/admin/notice">
               <el-icon><DataAnalysis /></el-icon>
               <span>公告管理</span>
             </el-menu-item>
@@ -57,20 +57,20 @@
               <el-icon><User /></el-icon>
               <span>用户管理</span>
             </template>
-            <el-menu-item index="/admin">
+            <el-menu-item index="/admin/admin">
               <el-icon><Avatar /></el-icon>
               <span>管理员信息</span>
             </el-menu-item>
-            <el-menu-item index="/user">
+            <el-menu-item index="/admin/user">
               <el-icon><UserFilled /></el-icon>
               <span>普通用户信息</span>
             </el-menu-item>
-            <el-menu-item index="/singer">
+            <el-menu-item index="/admin/singer">
               <el-icon><UserFilled /></el-icon>
               <span>歌手信息</span>
             </el-menu-item>
           </el-sub-menu>
-          <el-menu-item index="/person">
+          <el-menu-item index="/admin/person">
             <el-icon><User /></el-icon>
             <span>个人资料</span>
           </el-menu-item>

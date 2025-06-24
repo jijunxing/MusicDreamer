@@ -114,7 +114,11 @@ const login = () => {
     request.post('/login', form).then(res => {
       if (res.code === '200') {
         localStorage.setItem('currentUser', JSON.stringify(res.data))
-        router.push('/')
+        console.log(res.data)
+        if(res.data.role == "ADMIN")
+          router.push('/admin/')
+        else
+          router.push('/user/')
         ElMessage.success('登录成功')
       } else {
         ElMessage.error(res.msg)

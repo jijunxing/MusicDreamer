@@ -6,7 +6,7 @@
 
     <insert id="insert">
         insert into user (username, password, avatar, role, phone, email, about, create_time, activation)
-        values(#{username}, #{password},  #{avatar}, #{role},  #{phone}, #{email}, #{about}, #{creatTime}, 1)
+        values(#{username}, #{password},  #{avatar}, #{role},  #{phone}, #{email}, #{about}, #{createTime}, 1)
     </insert>
 
     <delete id="deleteById">
@@ -23,7 +23,8 @@
             <if test="phone != null">phone = #{phone},</if>
             <if test="email != null">email = #{email},</if>
             <if test="about != null">about = #{about},</if>
-            <if test="activation != null">activation = #{activation}</if>
+            <if test="activation != null">activation = #{activation},</if>
+            <if test="sex != null">sex = #{sex}</if>
         </set>
         where id= #{id}
     </update>
@@ -31,10 +32,14 @@
     <select id="selectAll" resultType="com.example.entity.User">
         select * from user
         <where>
-            <if test="name != null">
+            <if test="username != null">
                 username like concat('%', #{username}, '%')
+            </if>
+            <if test="role != null">
+                and role = #{role}
             </if>
         </where>
         order by id asc
     </select>
+
 </mapper>

@@ -29,6 +29,9 @@ public class UserService {
         else if(dbUser.getActivation()==0) {
             throw new CustomException("账号被冻结");
         }
+        else if(!dbUser.getRole().equals(user.getRole())) {
+            throw new CustomException("请检查用户类型是否选择错误");
+        }
         //校验密码
         else if(!dbUser.getPassword().equals(user.getPassword())){
             throw new CustomException("账号或密码错误");
@@ -41,13 +44,12 @@ public class UserService {
         //校验用户账号是否存在
         User dbUser = userMapper.selectByUsername(user.getUsername());
         if(dbUser != null) {
-            throw new CustomException("账号已存在");
+            throw new CustomException("用户名已存在");
         }
         //校验密码是否为空
         if(ObjectUtil.isEmpty(user.getPassword())) {
             throw new CustomException("密码不能为空");
         }
-        user.setRole("USER");
         user.setCreateTime(DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
         userMapper.insert(user);
     }
@@ -82,13 +84,13 @@ public class UserService {
         return userMapper.selectById(id);
     }
 
-    public List<User> selectAll(String username) {
-        return userMapper.selectAll(username);
+    public List<User> selectAll(String username, String role) {
+        return userMapper.selectAll(username, role);
     }
 
-    public PageInfo<User> selectPage(String username, Integer pageNum, Integer pageSize) {
+    public PageInfo<User> selectPage(String username, String role, Integer pageNum, Integer pageSize) {
         PageHelper.startPage(pageNum, pageSize);
-        List<User> list=this.selectAll(username);
+        List<User> list=this.selectAll(username, role);
         return PageInfo.of(list);
     }
 }

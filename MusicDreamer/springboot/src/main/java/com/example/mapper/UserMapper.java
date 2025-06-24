@@ -19,5 +19,5 @@ public interface UserMapper {
     @Select("select * from user where id = #{id}")
     User selectById(Integer id);
 
-    List<User> selectAll(String username);
+    List<User> selectAll(String username, String role);
 }

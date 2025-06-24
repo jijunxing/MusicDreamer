@@ -4,23 +4,24 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'Manager',
+      path: '/admin',
+      name: 'admin',
       component: () => import('@/views/Manager.vue'),
-      redirect: '/home',
+      redirect: '/admin/home/',
       children: [
         { path: 'home', name: 'Home', component: () => import('@/views/manager/Home.vue')},
-        { path: 'user', name: 'User', component: () => import('@/views/manager/User.vue')},
+        { path: 'user', name: 'User', component: () => import('@/views/manager/UserInfo.vue')},
+        { path: 'singer', name: 'singer', component: () => import('@/views/manager/SingerInfo.vue')},
+        { path: 'admin', name: 'admin', component: () => import('@/views/manager/AdminInfo.vue')},
       ]
     },
     // {
-    //   path: '/',
-    //   name: 'User',
-    //   component: () => import('@/views/User.vue'),
-    //   redirect: '/home',
+    //   path: '/user',
+    //   name: 'user',
+    //   component: () => import('@/views/UserInfo.vue'),
+    //   redirect: '/user/home',
     //   children: [
-    //     { path: 'home', name: 'Home', component: () => import('@/views/manager/Home.vue')},
-    //     { path: 'user', name: 'User', component: () => import('@/views/manager/User.vue')},
+    //     { path: 'home', name: 'Home', component: () => import('@/views/user/Home.vue')},
     //   ]
     // },
     { path: '/login', name: 'Login', component: () => import('@/views/Login.vue')},

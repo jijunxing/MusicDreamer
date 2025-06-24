@@ -4,8 +4,8 @@
       <!-- Logo和标题区域 -->
       <div class="header">
         <img src="@/assets/imgs/logo.svg" alt="Logo" class="logo">
-        <h2 class="title">MusicDreamer 悦享音乐</h2>
-        <p class="subtitle">欢迎注册MusicDreamer 悦享音乐</p>
+        <h2 class="title">MusicDreamer</h2>
+        <p class="subtitle">悦享音乐</p>
       </div>
 
       <!-- 注册表单 -->
@@ -19,7 +19,7 @@
           <el-form-item prop="username">
             <el-input
               v-model="form.username"
-              placeholder="请输入账号"
+              placeholder="请输入用户名"
               :prefix-icon="User"
               size="large"
               clearable
@@ -103,8 +103,8 @@ const form = reactive({
 
 const rules = reactive({
   username: [
-    { required: true, message: '请输入账号', trigger: 'blur' },
-    { min: 3, max: 20, message: '账号长度应在 3 到 20 个字符之间', trigger: 'blur' }
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 6, message: '用户名应在 2 到 6 个字符之间', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },

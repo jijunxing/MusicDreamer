@@ -13,6 +13,16 @@ public class User {
     private String about;
     private String createTime;
 
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
+
+    private String sex;
+
     public int getActivation() {
         return activation;
     }
