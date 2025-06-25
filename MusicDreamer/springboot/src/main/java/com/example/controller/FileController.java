@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 public class FileController {
 
     //表示本地磁盘文件的存储路径,D:\IdeaProjects\MusicDreamer
-    private static final String filePath = System.getProperty("user.dir") + "/files/";
+    private static final String filePath = System.getProperty("user.dir") + "/uploadFiles/";
 
     //文件上传
     @PostMapping("/upload")

@@ -16,8 +16,9 @@
           </span>
           <div class="avatar-container">
             <img
-                :src="data.user.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'"
+                :src="avatarUrl"
                 class="user-avatar"
+                @error="handleAvatarError"
             >
             <span class="user-name">{{ data.user.name }}</span>
           </div>
@@ -88,7 +89,7 @@
               <span>歌单管理</span>
             </el-menu-item>
           </el-sub-menu>
-          <el-menu-item index="login" @click="logout">
+          <el-menu-item index="/login" @click="logout">
             <el-icon><SwitchButton /></el-icon>
             <span>退出系统</span>
           </el-menu-item>
@@ -103,7 +104,10 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import {reactive} from "vue";
+import {reactive} from "vue"
+import { ref, watch } from 'vue'
+import defaultAvatar from '@/assets/imgs/default_avatar.png' // 导入默认头像
+
 const $route = useRoute()
 console.log($route.path)
 const user = JSON.parse(localStorage.getItem('currentUser') || '{}')
@@ -117,6 +121,19 @@ const logout = () => {
 
 const updateUser = () => {
   data.user = JSON.parse(localStorage.getItem('currentUser') || '{}')
+}
+
+// 创建头像URL的响应式引用
+const avatarUrl = ref(data.user.avatar || defaultAvatar)
+
+// 监听用户数据变化
+watch(() => data.user.avatar, (newAvatar) => {
+  avatarUrl.value = newAvatar || defaultAvatar
+})
+
+// 头像加载失败处理函数
+const handleAvatarError = () => {
+  avatarUrl.value = defaultAvatar
 }
 
 </script>

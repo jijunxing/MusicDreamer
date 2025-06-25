@@ -184,13 +184,14 @@ const frozenAccount = (row) => {
 }
 
 const unfrozenAccount = (row) => {
+  row.activation = 1
   request.request({
     method: 'PUT',
     url: 'user/update',
     data: row
   }).then(res => {
     if(res.code === '200'){
-      ElMessage.success('冻结成功')
+      ElMessage.success('解冻成功')
       load()
     } else {
       ElMessage.error(res.msg)
