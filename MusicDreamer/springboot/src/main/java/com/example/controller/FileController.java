@@ -19,30 +19,33 @@ public class FileController {
     //表示本地磁盘文件的存储路径,D:\IdeaProjects\MusicDreamer
     private static final String filePath = System.getProperty("user.dir") + "/uploadFiles/";
 
-    //文件上传
+    //文件上传，支持分类存储
     @PostMapping("/upload")
-    public Result upload(MultipartFile file) throws IOException {
-        if(!FileUtil.exist(filePath)) {
-            FileUtil.mkdir(filePath);
+    public Result upload(@RequestParam("file") MultipartFile file,
+                        @RequestParam(value = "type", defaultValue = "other") String type) throws IOException {
+        String basePath = System.getProperty("user.dir") + "/uploadFiles/";
+        String typePath = basePath + type + "/";
+        if(!FileUtil.exist(typePath)) {
+            FileUtil.mkdir(typePath);
         }
-        String originalFileName = file.getOriginalFilename(); //文件的原始名称
-        String realFilePath = filePath + originalFileName;
-        if (FileUtil.exist(realFilePath)) { //同名文件已存在
+        String originalFileName = file.getOriginalFilename();
+        String realFilePath = typePath + originalFileName;
+        if (FileUtil.exist(realFilePath)) {
             originalFileName =  FileUtil.mainName(originalFileName)+"_"+System.currentTimeMillis()
                     +"."+FileUtil.extName(originalFileName);
-            realFilePath = filePath + originalFileName;
+            realFilePath = typePath + originalFileName;
         }
         File localFile = new File(realFilePath);
         file.transferTo(localFile);
-        String url = "http://localhost:9090/files/download/" + originalFileName;
+        String url = "http://localhost:9090/files/download/" + type + "/" + originalFileName;
         return Result.success(url);
     }
 
-    //文件下载
-    @GetMapping("/download/{fileName}")
-    public void download(@PathVariable String fileName, HttpServletResponse response) throws IOException {
+    //分类文件下载
+    @GetMapping("/download/{type}/{fileName}")
+    public void download(@PathVariable String type, @PathVariable String fileName, HttpServletResponse response) throws IOException {
         response.setHeader("Content-Disposition", "attachment; filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-        String realFilePath = filePath + fileName;
+        String realFilePath = System.getProperty("user.dir") + "/uploadFiles/" + type + "/" + fileName;
         byte[] bytes = FileUtil.readBytes(realFilePath);
         ServletOutputStream os = response.getOutputStream();
         os.write(bytes);

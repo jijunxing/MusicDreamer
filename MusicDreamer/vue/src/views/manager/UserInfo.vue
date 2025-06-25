@@ -48,9 +48,7 @@
           <el-input v-model="data.form.username" autocomplete="off" :disabled="!!data.form.id" />
         </el-form-item>
         <el-form-item label="头像">
-          <el-upload action="http://localhost:9090/files/upload" :on-success="handleFileUpload">
-            <el-button type="primary">点击上传</el-button>
-          </el-upload>
+          <UploadFile v-model="data.form.avatar" type="image" />
         </el-form-item>
         <el-form-item label="性别">
           <el-select
@@ -90,6 +88,7 @@ import {reactive} from "vue"
 import request from "@/utils/request";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {Delete, Edit, Lock, Unlock} from '@element-plus/icons-vue';
+import UploadFile from '@/components/UploadFile.vue'
 
 const data = reactive({
   tableData: [
@@ -197,10 +196,6 @@ const unfrozenAccount = (row) => {
       ElMessage.error(res.msg)
     }
   })
-}
-
-const handleFileUpload = (file) => {
-  data.form.avatar = file.data
 }
 
 const options = [

@@ -46,14 +46,10 @@
           <el-input v-model="data.form.musicName" autocomplete="off" />
         </el-form-item>
         <el-form-item label="封面">
-          <el-upload action="http://localhost:9090/files/upload" :on-success="handleImageUpload">
-            <el-button type="primary">上传封面</el-button>
-          </el-upload>
+          <UploadFile v-model="data.form.imageUrl" type="image" />
         </el-form-item>
         <el-form-item label="音乐文件">
-          <el-upload action="http://localhost:9090/files/upload" :on-success="handleMusicUpload">
-            <el-button type="primary">上传音乐</el-button>
-          </el-upload>
+          <UploadFile v-model="data.form.musicUrl" type="music" />
         </el-form-item>
         <el-form-item label="歌手ID">
           <el-input v-model="data.form.fromSinger" autocomplete="off" />
@@ -87,6 +83,7 @@ import {reactive} from "vue"
 import request from "@/utils/request";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {Delete, Edit} from '@element-plus/icons-vue';
+import UploadFile from '@/components/UploadFile.vue'
 
 const data = reactive({
   tableData: [],
@@ -157,13 +154,5 @@ const del = (id) => {
   }).catch(err => {
     console.log(err)
   })
-}
-
-const handleImageUpload = (file) => {
-  data.form.imageUrl = file.data
-}
-
-const handleMusicUpload = (file) => {
-  data.form.musicUrl = file.data
 }
 </script> 

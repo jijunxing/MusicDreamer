@@ -10,7 +10,10 @@ const request = axios.create({
 // request 拦截器
 // 可以自请求发送前对请求做一些处理
 request.interceptors.request.use(config => {
-    config.headers['Content-Type'] = 'application/json;charset=utf-8';
+    // 只有不是 FormData 才加 json header
+    if (!(config.data instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json;charset=utf-8';
+    }
     return config
 }, error => {
     return Promise.reject(error)

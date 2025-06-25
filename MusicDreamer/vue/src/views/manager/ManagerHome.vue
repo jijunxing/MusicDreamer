@@ -1,6 +1,5 @@
 <template>
   <div class="home-container">
-    <!-- 欢迎语 -->
     <div class="welcome-card">
       <div>欢迎您，<span class="user-name">{{ user.username }}</span> 祝您今天过得开心！</div>
     </div>
