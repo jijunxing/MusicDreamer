@@ -9,10 +9,12 @@ const router = createRouter({
       component: () => import('@/views/Manager.vue'),
       redirect: '/admin/home/',
       children: [
-        { path: 'home', name: 'Home', component: () => import('@/views/manager/Home.vue')},
-        { path: 'user', name: 'User', component: () => import('@/views/manager/UserInfo.vue')},
-        { path: 'singer', name: 'singer', component: () => import('@/views/manager/SingerInfo.vue')},
-        { path: 'admin', name: 'admin', component: () => import('@/views/manager/AdminInfo.vue')},
+        { path: 'home', name: 'ManagerHome', component: () => import('@/views/manager/ManagerHome.vue')},
+        { path: 'user', name: 'UserInfo', component: () => import('@/views/manager/UserInfo.vue')},
+        { path: 'singer', name: 'SingerInfo', component: () => import('@/views/manager/SingerInfo.vue')},
+        { path: 'admin', name: 'AdminInfo', component: () => import('@/views/manager/AdminInfo.vue')},
+        { path: 'music', name: 'MusicInfo', component: () => import('@/views/manager/MusicInfo.vue')},
+        { path: 'music', name: 'MusicInfo', component: () => import('@/views/manager/MusicInfo.vue')},
       ]
     },
     // {
@@ -21,7 +23,7 @@ const router = createRouter({
     //   component: () => import('@/views/UserInfo.vue'),
     //   redirect: '/user/home',
     //   children: [
-    //     { path: 'home', name: 'Home', component: () => import('@/views/user/Home.vue')},
+    //     { path: 'home', name: 'Home', component: () => import('@/views/user/ManagerHome.vue')},
     //   ]
     // },
     { path: '/login', name: 'Login', component: () => import('@/views/Login.vue')},

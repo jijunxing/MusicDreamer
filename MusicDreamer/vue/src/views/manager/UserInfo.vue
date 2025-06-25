@@ -29,7 +29,9 @@
         <el-table-column prop="email" label="邮箱"/>
         <el-table-column label="操作" width="180">
           <template #default="scope">
-            <el-button type="primary" :icon="Edit" circle @click="handleEdit(scope.row)" />
+            <el-button type="success" :icon="Edit" circle @click="handleEdit(scope.row)" />
+            <el-button type="primary" :icon="Lock" v-if="scope.row.activation === 1" circle @click="frozenAccount(scope.row)" />
+            <el-button type="primary" :icon="Unlock" v-if="scope.row.activation === 0" circle @click="unfrozenAccount(scope.row)" />
             <el-button type="danger" :icon="Delete" circle @click="del(scope.row.id)" />
           </template>
         </el-table-column>
@@ -87,7 +89,7 @@
 import {reactive} from "vue"
 import request from "@/utils/request";
 import {ElMessage, ElMessageBox} from "element-plus";
-import {Delete, Edit} from '@element-plus/icons-vue';
+import {Delete, Edit, Lock, Unlock} from '@element-plus/icons-vue';
 
 const data = reactive({
   tableData: [
@@ -162,6 +164,37 @@ const del = (id) => {
     })
   }).catch(err => {
     console.log(err)
+  })
+}
+
+const frozenAccount = (row) => {
+  row.activation = 0
+  request.request({
+    method: 'PUT',
+    url: 'user/update',
+    data: row
+  }).then(res => {
+    if(res.code === '200'){
+      ElMessage.success('冻结成功')
+      load()
+    } else {
+      ElMessage.error(res.msg)
+    }
+  })
+}
+
+const unfrozenAccount = (row) => {
+  request.request({
+    method: 'PUT',
+    url: 'user/update',
+    data: row
+  }).then(res => {
+    if(res.code === '200'){
+      ElMessage.success('冻结成功')
+      load()
+    } else {
+      ElMessage.error(res.msg)
+    }
   })
 }
 

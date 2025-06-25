@@ -13,7 +13,6 @@ public class GlobalExceptionHandler {
 
     private static final Log log = LogFactory.get();
 
-
     //统一异常处理@ExceptionHandler,主要用于Exception
     @ExceptionHandler(Exception.class)
     @ResponseBody//返回json串

@@ -74,6 +74,20 @@
             <el-icon><User /></el-icon>
             <span>个人资料</span>
           </el-menu-item>
+          <el-sub-menu index="4">
+            <template #title>
+              <el-icon><Headset /></el-icon>
+              <span>音乐内容管理</span>
+            </template>
+            <el-menu-item index="/admin/music">
+              <el-icon><Headset /></el-icon>
+              <span>歌曲管理</span>
+            </el-menu-item>
+            <el-menu-item index="/admin/songlist">
+              <el-icon><Collection /></el-icon>
+              <span>歌单管理</span>
+            </el-menu-item>
+          </el-sub-menu>
           <el-menu-item index="login" @click="logout">
             <el-icon><SwitchButton /></el-icon>
             <span>退出系统</span>
