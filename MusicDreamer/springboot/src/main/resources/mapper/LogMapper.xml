@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.LogMapper">
+    <insert id="insert" parameterType="com.example.entity.Log">
+        INSERT INTO log (create_date, do_some, MusicName, userName)
+        VALUES (#{createDate}, #{doSome}, #{musicName}, #{userName})
+    </insert>
+    <delete id="deleteById">
+        DELETE FROM log WHERE create_date = #{createDate} AND userName = #{userName} AND MusicName = #{musicName}
+    </delete>
+    <update id="update" parameterType="com.example.entity.Log">
+        UPDATE log
+        SET do_some = #{doSome}
+        WHERE create_date = #{createDate} AND userName = #{userName} AND MusicName = #{musicName}
+    </update>
+    <select id="selectAll" resultType="com.example.entity.Log">
+        SELECT * FROM log
+        <where>
+            <if test="userName != null and userName != ''">
+                AND userName = #{userName}
+            </if>
+            <if test="musicName != null and musicName != ''">
+                AND MusicName = #{musicName}
+            </if>
+        </where>
+    </select>
+</mapper> 

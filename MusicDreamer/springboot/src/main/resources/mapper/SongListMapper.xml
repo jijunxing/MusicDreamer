@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.SongListMapper">
+    <insert id="insert" parameterType="com.example.entity.SongList">
+        INSERT INTO song_list (name, image, message, tags, user, create_date)
+        VALUES (#{name}, #{image}, #{message}, #{tags}, #{user}, #{createDate})
+    </insert>
+    <delete id="deleteById">
+        DELETE FROM song_list WHERE id = #{id}
+    </delete>
+    <update id="update" parameterType="com.example.entity.SongList">
+        UPDATE song_list
+        SET name = #{name}, image = #{image}, message = #{message}, tags = #{tags}, user = #{user}, create_date = #{createDate}
+        WHERE id = #{id}
+    </update>
+    <select id="selectById" resultType="com.example.entity.SongList">
+        SELECT * FROM song_list WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultType="com.example.entity.SongList">
+        SELECT * FROM song_list
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="user != null">
+                AND user = #{user}
+            </if>
+        </where>
+        ORDER BY create_date DESC
+    </select>
+</mapper> 
