@@ -113,9 +113,10 @@ const login = () => {
     loading.value = true
     request.post('/login', form).then(res => {
       if (res.code === '200') {
-        localStorage.setItem('currentUser', JSON.stringify(res.data))
+        localStorage.setItem('currentUser', JSON.stringify(res.data.user))
+        localStorage.setItem('jwt_token', res.data.jwt_token)
         console.log(res.data)
-        if(res.data.role == "ADMIN")
+        if(res.data.user.role == "ADMIN")
           router.push('/admin/')
         else
           router.push('/user/')

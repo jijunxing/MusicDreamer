@@ -1,7 +1,7 @@
 package com.example.controller;
 
 import cn.hutool.core.io.FileUtil;
-import com.example.common.Result;
+import com.example.util.Result;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;

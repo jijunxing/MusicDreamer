@@ -58,7 +58,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.4</version>
+            <version>1.18.30</version>
             <scope>provided</scope>
         </dependency>
 
@@ -87,6 +87,13 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.12.6</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.0.1</version> <!-- 使用最新稳定版本 -->
+            <scope>compile</scope> <!-- 可选，默认即为compile -->
         </dependency>
     </dependencies>
 </project>

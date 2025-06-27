@@ -1,6 +1,6 @@
 package com.example.controller;
 
-import com.example.common.Result;
+import com.example.util.Result;
 import com.example.entity.Log;
 import com.example.service.LogService;
 import jakarta.annotation.Resource;

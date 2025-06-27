@@ -1,6 +1,6 @@
 package com.example.controller;
 
-import com.example.common.Result;
+import com.example.util.Result;
 import com.example.entity.Music;
 import com.example.service.MusicService;
 import com.github.pagehelper.PageInfo;

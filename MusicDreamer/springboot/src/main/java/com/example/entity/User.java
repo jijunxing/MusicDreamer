@@ -13,4 +13,6 @@ public class User {
     private String email;
     private String about;
     private String createTime;
+    private Integer activation;
+    private String sex;
 }
