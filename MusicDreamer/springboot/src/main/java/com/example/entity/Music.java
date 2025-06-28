@@ -2,6 +2,8 @@ package com.example.entity;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class Music {
     private Integer musicId;
@@ -15,5 +17,5 @@ public class Music {
     private Integer activation;
     private String creatTime;
     private Integer listenNumb;
-
+    private List<Tag> tags;
 } 

@@ -30,16 +30,30 @@
     </update>
 
     <select id="selectAll" resultType="com.example.entity.Music">
-        select * from music
+        SELECT m.*, u.username AS singerName
+        FROM music m
+        LEFT JOIN user u ON m.from_singer = u.id
         <where>
             <if test="musicName != null">
-                music_name like concat('%', #{musicName}, '%')
+                m.music_name LIKE CONCAT('%', #{musicName}, '%')
             </if>
             <if test="fromSinger != null">
-                and from_singer = #{fromSinger}
+                AND m.from_singer = #{fromSinger}
             </if>
         </where>
-        order by music_id asc
+        ORDER BY m.music_id ASC
     </select>
+
+    <insert id="insertMusicTags">
+        INSERT INTO music_tag (music_id, tag_id)
+        VALUES
+        <foreach collection="tagIds" item="tagId" separator=",">
+            (#{musicId}, #{tagId})
+        </foreach>
+    </insert>
+
+    <delete id="deleteMusicTags">
+        DELETE FROM music_tag WHERE music_id = #{musicId}
+    </delete>
 
 </mapper> 

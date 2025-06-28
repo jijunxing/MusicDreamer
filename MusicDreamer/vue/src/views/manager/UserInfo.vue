@@ -139,7 +139,8 @@ const save = () => {
     if(res.code === '200'){
       ElMessage.success('操作成功')
       data.formVisible = false
-      load()
+      // load()
+      location.reload()
     } else {
       ElMessage.error(res.msg)
     }

@@ -41,7 +41,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const uploadUrl = import.meta.env.VITE_BASE_URL + '/files/upload'
-const headers = { }
+const headers = { Authorization: `Bearer ${localStorage.getItem('jwt_token') || ''}`}
 const imageUrl = ref(props.modelValue || '')
 const fileUrl = ref(props.modelValue || '')
 const fileInput = ref(null)
@@ -82,8 +82,8 @@ const onError = () => {
 
 <style scoped>
 .image-upload-box {
-  width: 240px;
-  height: 240px;
+  width: 120px;
+  height: 120px;
   border: 2px dashed #d9d9d9;
   display: flex;
   align-items: center;
