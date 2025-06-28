@@ -15,20 +15,41 @@
         <el-table-column prop="musicName" label="歌曲名"/>
         <el-table-column prop="imageUrl" label="封面">
           <template v-slot="scope">
-            <img v-if="scope.row.imageUrl" :src="scope.row.imageUrl" alt="" style="width: 50px; height: 50px; border-radius: 10%">
+            <el-image
+                v-if="scope.row.imageUrl"
+                :src="scope.row.imageUrl"
+                :preview-src-list="[scope.row.imageUrl]"
+                :preview-teleported="true"
+                append-to-body
+                style="width: 50px; height: 50px; border-radius: 10%; cursor: pointer"
+                fit="cover"
+            />
           </template>
         </el-table-column>
-        <el-table-column prop="fromSinger" label="歌手ID"/>
+        <el-table-column prop="tags" label="标签">
+          <template v-slot="scope">
+            <el-tag
+                v-for="tag in scope.row.tags"
+                :key="tag.id"
+                style="margin: 2px"
+                type="info"
+            >
+              {{ tag.name }}（{{ tag.type }}）
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="singerName" label="歌手用户名"/>
         <el-table-column prop="listenNumb" label="播放量"/>
         <el-table-column label="状态">
           <template #default="scope">
-            <el-tag type="success" v-if="scope.row.activation === 0">激活</el-tag>
-            <el-tag type="danger" v-if="scope.row.activation === 1">用户锁定</el-tag>
-            <el-tag type="info" v-if="scope.row.activation === 2">管理员锁定</el-tag>
+            <el-tag type="success" v-if="scope.row.activation === 1">激活</el-tag>
+            <el-tag type="primary" v-if="scope.row.activation === 0">冻结</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180">
+        <el-table-column label="操作" width="280">
           <template #default="scope">
+            <el-button type="primary" :icon="VideoPlay" circle @click="playNow(scope.row)" />
+            <el-button type="warning" icon="Plus" circle @click="addToQueue(scope.row)" />
             <el-button type="primary" :icon="Edit" circle @click="handleEdit(scope.row)" />
             <el-button type="danger" :icon="Delete" circle @click="del(scope.row.musicId)" />
           </template>
@@ -40,32 +61,56 @@
       <el-pagination background layout="prev, pager, next" @current-change="load" :page-size="data.pageSize" v-model:current-page="data.pageNum" :total="data.total"/>
     </div>
 
-    <el-dialog v-model="data.formVisible" title="音乐信息" width="30%" destroy-on-close>
-      <el-form :model="data.form" label-width="100px" style="padding-right: 50px">
-        <el-form-item label="歌曲名">
-          <el-input v-model="data.form.musicName" autocomplete="off" />
-        </el-form-item>
-        <el-form-item label="封面">
-          <UploadFile v-model="data.form.imageUrl" type="image" />
-        </el-form-item>
-        <el-form-item label="音乐文件">
-          <UploadFile v-model="data.form.musicUrl" type="music" />
-        </el-form-item>
-        <el-form-item label="歌手ID">
-          <el-input v-model="data.form.fromSinger" autocomplete="off" />
-        </el-form-item>
-        <el-form-item label="歌词文件">
-          <el-input v-model="data.form.lyric" autocomplete="off" />
-        </el-form-item>
-        <el-form-item label="时长(秒)">
-          <el-input v-model="data.form.timelength" autocomplete="off" type="number" />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="data.form.activation" placeholder="请选择状态">
-            <el-option :value="0" label="锁定" />
-            <el-option :value="1" label="激活" />
-          </el-select>
-        </el-form-item>
+    <el-dialog v-model="data.formVisible" title="音乐信息" width="50%">
+      <el-form :model="data.form" label-width="100px">
+        <div style="display: flex; gap: 20px;">
+          <!-- 左列 -->
+          <div style="flex: 1;">
+            <el-form-item label="歌曲名">
+              <el-input v-model="data.form.musicName" autocomplete="off" />
+            </el-form-item>
+            <el-form-item label="封面">
+              <UploadFile v-model="data.form.imageUrl" type="image" />
+            </el-form-item>
+            <el-form-item label="音乐文件">
+              <UploadFile v-model="data.form.musicUrl" type="music" />
+            </el-form-item>
+            <el-form-item label="歌手ID">
+              <el-input v-model="data.form.fromSinger" autocomplete="off" />
+            </el-form-item>
+            <el-form-item label="时长(秒)">
+              <el-input v-model="data.form.timelength" autocomplete="off" type="number" />
+            </el-form-item>
+            <el-form-item label="标签">
+              <el-select
+                  v-model="data.form.tagIds"
+                  multiple
+                  placeholder="请选择标签"
+                  filterable
+                  style="width: 100%"
+              >
+                <el-option
+                    v-for="tag in data.tagList"
+                    :key="tag.id"
+                    :label="tag.name + '（' + tag.type + '）'"
+                    :value="tag.id"
+                />
+              </el-select>
+            </el-form-item>
+          </div>
+
+          <!-- 右列 -->
+          <div style="flex: 1;">
+            <el-form-item label="歌词">
+              <el-input
+                  type="textarea"
+                  v-model="data.form.lyric"
+                  :rows="10"
+                  placeholder="请输入歌词内容或路径"
+              />
+            </el-form-item>
+          </div>
+        </div>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -78,11 +123,20 @@
 </template>
 
 <script setup>
-import {reactive} from "vue"
+import {reactive, onMounted} from "vue"
 import request from "@/utils/request";
 import {ElMessage, ElMessageBox} from "element-plus";
-import {Delete, Edit} from '@element-plus/icons-vue';
+import {Delete, Edit, VideoPlay, Plus} from '@element-plus/icons-vue';
 import UploadFile from '@/components/UploadFile.vue'
+import { player } from '@/utils/player'
+
+const playNow = (row) => {
+  player.play(row)
+}
+
+const addToQueue = (row) => {
+  player.addToQueue(row)
+}
 
 const data = reactive({
   tableData: [],
@@ -90,9 +144,23 @@ const data = reactive({
   pageNum: 1,
   pageSize: 5,
   formVisible: false,
-  form: {},
-  musicName: ''
+  form: {
+    tagIds: []
+  },
+  musicName: '',
+  tagList: []
 })
+
+onMounted(() => {
+  load()
+  loadTags()
+})
+
+const loadTags = () => {
+  request.get('/tag/list').then(res => {
+    data.tagList = res.data
+  })
+}
 
 const load = () => {
   request.get('/music/selectPage', {
@@ -107,26 +175,28 @@ const load = () => {
   })
 }
 
-load()
-
 const reset = () => {
   data.musicName = null;
   load();
 }
 
 const handleAdd = () =>{
-  data.form = {};
+  data.form = { tagIds: [] };
   data.formVisible = true;
 }
 
 const save = () => {
+  const payload = {
+    ...data.form,
+    tags: data.form.tagIds.map(id => ({ id }))
+  }
   request.request({
-    method: data.form.musicId ? 'PUT' : 'POST',
-    url: data.form.musicId ? '/music/update' : '/music/add',
-    data: data.form
+    method: payload.musicId ? 'PUT' : 'POST',
+    url: payload.musicId ? '/music/update' : '/music/add',
+    data: payload
   }).then(res => {
-    if(res.code === '200'){
-      ElMessage.success('操作成功')
+    if (res.code === '200') {
+      ElMessage.success('保存成功')
       data.formVisible = false
       load()
     } else {
@@ -136,8 +206,11 @@ const save = () => {
 }
 
 const handleEdit = (row) => {
-  data.form = JSON.parse(JSON.stringify(row))
-  data.formVisible = true;
+  data.form = {
+    ...row,
+    tagIds: row.tags?.map(t => t.id) || []
+  }
+  data.formVisible = true
 }
 
 const del = (id) => {
@@ -154,4 +227,4 @@ const del = (id) => {
     console.log(err)
   })
 }
-</script> 
+</script>

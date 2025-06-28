@@ -11,4 +11,6 @@ public interface MusicMapper {
     @Select("select * from music where music_id = #{id}")
     Music selectById(Integer id);
     List<Music> selectAll(String musicName, Integer fromSinger);
+    void insertMusicTags(Integer musicId, List<Integer> tagIds);
+    void deleteMusicTags(Integer musicId);
 } 
