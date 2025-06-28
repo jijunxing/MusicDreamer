@@ -143,7 +143,7 @@ const register = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: url("@/assets/imgs/backdrop.jpg") center/cover no-repeat;
+  background: url("@/assets/imgs/backdrop.png") center/cover no-repeat;
 }
 
 .register-box {

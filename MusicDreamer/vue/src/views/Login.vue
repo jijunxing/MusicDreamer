@@ -107,6 +107,9 @@ const rules = reactive({
 })
 
 const login = () => {
+  // 登录前清除旧 token
+  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('currentUser');
   formRef.value.validate((valid) => {
     if (!valid) return
     
@@ -139,7 +142,7 @@ const login = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: url("@/assets/imgs/backdrop.jpg") center/cover no-repeat;
+  background: url("@/assets/imgs/backdrop.png") center/cover no-repeat;
 }
 
 .login-box {

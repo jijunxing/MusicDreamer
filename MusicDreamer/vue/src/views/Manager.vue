@@ -89,7 +89,7 @@
               <span>歌单管理</span>
             </el-menu-item>
           </el-sub-menu>
-          <el-menu-item index="/" @click="logout">
+          <el-menu-item index="/login" @click="logout">
             <el-icon><SwitchButton /></el-icon>
             <span>退出系统</span>
           </el-menu-item>
@@ -117,6 +117,7 @@ const data = reactive({
 
 const logout = () => {
   localStorage.removeItem('currentUser')
+  localStorage.removeItem('jwt_token')
 }
 
 const updateUser = () => {
