@@ -54,7 +54,7 @@
         <el-form-item label="歌手ID">
           <el-input v-model="data.form.fromSinger" autocomplete="off" />
         </el-form-item>
-        <el-form-item label="歌词">
+        <el-form-item label="歌词文件">
           <el-input v-model="data.form.lyric" autocomplete="off" />
         </el-form-item>
         <el-form-item label="时长(秒)">
@@ -62,9 +62,8 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="data.form.activation" placeholder="请选择状态">
-            <el-option :value="0" label="激活" />
-            <el-option :value="1" label="用户锁定" />
-            <el-option :value="2" label="管理员锁定" />
+            <el-option :value="0" label="锁定" />
+            <el-option :value="1" label="激活" />
           </el-select>
         </el-form-item>
       </el-form>

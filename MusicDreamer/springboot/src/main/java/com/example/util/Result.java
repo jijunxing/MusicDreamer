@@ -1,4 +1,4 @@
-package com.example.common;
+package com.example.util;
 
 public class Result {
     private String code;

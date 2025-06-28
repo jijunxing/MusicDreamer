@@ -19,3 +19,7 @@ mybatis:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: true
   mapper-locations: classpath:mapper/*.xml
+
+jwt:
+  key: MUSICDREAMERbenghuaixingqiongtiedaoZHOUJUNCAI196007
+  ttl: 1209600000 # 14天，单位：毫秒

@@ -107,15 +107,19 @@ const rules = reactive({
 })
 
 const login = () => {
+  // 登录前清除旧 token
+  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('currentUser');
   formRef.value.validate((valid) => {
     if (!valid) return
     
     loading.value = true
     request.post('/login', form).then(res => {
       if (res.code === '200') {
-        localStorage.setItem('currentUser', JSON.stringify(res.data))
+        localStorage.setItem('currentUser', JSON.stringify(res.data.user))
+        localStorage.setItem('jwt_token', res.data.jwt_token)
         console.log(res.data)
-        if(res.data.role == "ADMIN")
+        if(res.data.user.role == "ADMIN")
           router.push('/admin/')
         else
           router.push('/user/')
@@ -138,7 +142,7 @@ const login = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: url("@/assets/imgs/backdrop.jpg") center/cover no-repeat;
+  background: url("@/assets/imgs/backdrop.png") center/cover no-repeat;
 }
 
 .login-box {

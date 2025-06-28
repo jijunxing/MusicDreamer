@@ -1,10 +1,12 @@
 package com.example.controller;
 
-import com.example.common.Result;
+import com.example.util.Result;
 import com.example.entity.User;
 import com.example.service.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 public class WebController {
@@ -16,8 +18,8 @@ public class WebController {
      */
     @PostMapping("/login")
     public Result login(@RequestBody User user) {
-        User dbuser = userService.login(user);
-        return Result.success(dbuser);
+        Map<String, Object> loginResult = userService.login(user);
+        return Result.success(loginResult);
     }
 
     @PostMapping("/register")

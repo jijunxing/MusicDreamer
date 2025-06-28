@@ -9,6 +9,7 @@ public class Music {
     private String musicUrl;
     private String imageUrl;
     private Integer fromSinger;
+    private String singerName;
     private String lyric;
     private Integer timelength;
     private Integer activation;
