@@ -18,6 +18,7 @@ const router = createRouter({
         { path: 'admin', name: 'AdminInfo', component: () => import('@/views/manager/AdminInfo.vue')},
         { path: 'music', name: 'MusicInfo', component: () => import('@/views/manager/MusicInfo.vue')},
         { path: 'logs', name: 'LogInfo', component: () => import('@/views/manager/LogInfo.vue')},
+        { path: 'notice', name: 'NoticeInfo', component: () => import('@/views/manager/NoticeInfo.vue')},
         { path: 'songlist', name: 'SongListInfo', component: () => import('@/views/manager/SongListInfo.vue')},
       ]
     },

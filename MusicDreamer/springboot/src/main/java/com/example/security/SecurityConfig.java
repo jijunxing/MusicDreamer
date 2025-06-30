@@ -42,10 +42,22 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 基于token，不需要session
                 .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers("/login","/register","/files/download/**").permitAll() // 放行api
+                        // 公开路径
+                        .requestMatchers("/login", "/register", "/files/download/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
-                        .requestMatchers("/admin/**").hasAnyRole("ADMIN")
-                        .requestMatchers("/user/**","/music/**","/files/upload","/tags/**").hasAnyRole("USER", "ADMIN")
+
+                        // 特殊路径：用户更新接口（多角色可访问）
+                        .requestMatchers("/user/update").hasAnyRole("USER","ADMIN","SINGER")
+
+                        // 多角色可访问的模块
+                        .requestMatchers("/music/**", "/files/upload", "/tags/**", "/notice/**","/user/**","/songlist/**"
+                        ).hasAnyRole("USER", "ADMIN", "SINGER")
+
+                        // ADMIN专属路径
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+
+                        // 其他请求需要认证
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);

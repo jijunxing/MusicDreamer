@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.entity.Music;
 import com.example.util.Result;
 import com.example.entity.SongList;
 import com.example.service.SongListService;
@@ -44,4 +45,42 @@ public class SongListController {
         List<SongList> list = songListService.selectAll(name, user);
         return Result.success(list);
     }
+
+    @PostMapping("/addMusic")
+    public Result addMusicToList(@RequestParam Integer listId, @RequestParam Integer musicId) {
+        songListService.addMusicToList(listId, musicId);
+        return Result.success();
+    }
+
+    @DeleteMapping("/removeMusic")
+    public Result removeMusicFromList(@RequestParam Integer listId, @RequestParam Integer musicId) {
+        songListService.removeMusicFromList(listId, musicId);
+        return Result.success();
+    }
+
+    @GetMapping("/selectPage")
+    public Result selectPage(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer user,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.success(songListService.selectPage(name, user, pageNum, pageSize));
+    }
+
+    @GetMapping("/selectForSonglist")
+    public Result selectForSonglist(
+            @RequestParam(required = false) String keyword,
+            @RequestParam Integer excludeSonglistId) {
+        List<Music> musics = songListService.selectForSonglist(keyword,excludeSonglistId);
+        return Result.success(musics);
+    }
+
+//    @PostMapping("/addMusics")
+//    public Result addMusics(@RequestBody SonglistMusicBatchAddDto dto) {
+//        for(Long musicId : dto.getMusicIds()) {
+//            songlistMusicMapper.insert(dto.getSonglistId(), musicId);
+//        }
+//        return Result.success();
+//    }
+
 } 

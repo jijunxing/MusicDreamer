@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.mapper.MusicMapper">
 
-    <insert id="insert">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="musicId">
         insert into music (music_name, music_url, image_url, from_singer, lyric, timelength, activation, creat_time, listen_numb)
         values(#{musicName}, #{musicUrl}, #{imageUrl}, #{fromSinger}, #{lyric}, #{timelength}, #{activation}, #{creatTime}, #{listenNumb})
     </insert>
@@ -56,4 +56,39 @@
         DELETE FROM music_tag WHERE music_id = #{musicId}
     </delete>
 
+    <delete id="deleteTagsByMusicId">
+        delete from music_tag where music_id = #{musicId}
+    </delete>
+
+    <insert id="insertMusicTag">
+        insert into music_tag (music_id, tag_id) values (#{musicId}, #{tagId})
+    </insert>
+
+    <update id="freezeById">
+        update music set activation = 0 where music_id = #{id}
+    </update>
+    <update id="unfreezeById">
+        update music set activation = 1 where music_id = #{id}
+    </update>
+    <select id="selectByKeywordExcludingIds" resultType="com.example.entity.Music">
+        select music.* , user.username as singerName from music left join user on user.id = music.from_singer
+        <where>
+            <choose>
+                <when test="keyword != null and keyword.trim() != ''">
+                    (music.music_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR user.username LIKE CONCAT('%', #{keyword}, '%'))
+                </when>
+                <otherwise>
+                    1=1
+                </otherwise>
+            </choose>
+        AND music.activation = 1
+            <if test="existingIds != null and existingIds.size() > 0">
+                AND music_id NOT IN
+                <foreach collection="existingIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </select>
 </mapper> 

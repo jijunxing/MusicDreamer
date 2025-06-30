@@ -2,22 +2,30 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.mapper.SongListMapper">
     <insert id="insert" parameterType="com.example.entity.SongList">
-        INSERT INTO song_list (name, image, message, tags, user, create_date)
-        VALUES (#{name}, #{image}, #{message}, #{tags}, #{user}, #{createDate})
+        INSERT INTO song_list (name, image_url, about, user, create_time)
+        VALUES (#{name}, #{imageUrl}, #{about}, #{user}, #{createTime})
     </insert>
     <delete id="deleteById">
         DELETE FROM song_list WHERE id = #{id}
     </delete>
     <update id="update" parameterType="com.example.entity.SongList">
         UPDATE song_list
-        SET name = #{name}, image = #{image}, message = #{message}, tags = #{tags}, user = #{user}, create_date = #{createDate}
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="about != null">about = #{about},</if>
+            <if test="user != null">user = #{user},</if>
+            <if test="createTime != null">create_time = #{createTime}</if>
+        </set>
         WHERE id = #{id}
     </update>
     <select id="selectById" resultType="com.example.entity.SongList">
         SELECT * FROM song_list WHERE id = #{id}
     </select>
     <select id="selectAll" resultType="com.example.entity.SongList">
-        SELECT * FROM song_list
+        SELECT sl.*, COUNT(lm.music_id) AS musicCount
+        FROM song_list sl LEFT JOIN list_music lm
+        ON sl.id = lm.list_id
         <where>
             <if test="name != null and name != ''">
                 AND name LIKE CONCAT('%', #{name}, '%')
@@ -26,6 +34,16 @@
                 AND user = #{user}
             </if>
         </where>
-        ORDER BY create_date DESC
+        GROUP BY sl.id
+        ORDER BY create_time DESC
+    </select>
+    <insert id="addMusicToList">
+        INSERT INTO list_music (list_id, music_id) VALUES (#{listId}, #{musicId})
+    </insert>
+    <delete id="removeMusicFromList">
+        DELETE FROM list_music WHERE list_id = #{listId} AND music_id = #{musicId}
+    </delete>
+    <select id="selectMusicIdsByListId" resultType="int">
+        SELECT music_id FROM list_music WHERE list_id = #{listId}
     </select>
 </mapper> 

@@ -8,7 +8,7 @@
       <el-button :icon="player.isPlaying ? VideoPause : VideoPlay" @click="player.toggle()">
         {{ player.isPlaying ? '暂停' : '播放' }}
       </el-button>
-      <el-button type="info" @click="player.next">下一首</el-button>
+      <el-button type="info" @click="player.next()">下一首</el-button>
     </div>
   </div>
 </template>

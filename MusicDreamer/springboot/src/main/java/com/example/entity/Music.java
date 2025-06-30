@@ -15,7 +15,9 @@ public class Music {
     private String lyric;
     private Integer timelength;
     private Integer activation;
-    private String creatTime;
+    private String createTime;
     private Integer listenNumb;
     private List<Tag> tags;
+    private List<Integer> tagIds; // 非数据库字段，用于接收前端传来的标签
+
 } 

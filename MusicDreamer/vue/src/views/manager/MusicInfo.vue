@@ -1,9 +1,15 @@
 <template>
   <div>
-    <div class="card" style="margin-bottom: 10px;">
-      <el-input prefix-icon="Search" style="width: 300px; margin-right: 10px" placeholder="请输入歌曲名查询" v-model="data.musicName"></el-input>
+    <div class="card" style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+      <el-input
+          prefix-icon="Search"
+          style="width: 300px"
+          placeholder="请输入歌名或歌手名"
+          v-model="data.keyword"
+          clearable
+      />
       <el-button type="primary" @click="load">查询</el-button>
-      <el-button type="info" style="margin: 0 10px" @click="reset">重置</el-button>
+      <el-button type="info" @click="reset">重置</el-button>
     </div>
 
     <div class="card" style="margin-bottom: 10px">
@@ -34,7 +40,7 @@
                 style="margin: 2px"
                 type="info"
             >
-              {{ tag.name }}（{{ tag.type }}）
+              {{ tag.name }}
             </el-tag>
           </template>
         </el-table-column>
@@ -46,12 +52,14 @@
             <el-tag type="primary" v-if="scope.row.activation === 0">冻结</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280">
+        <el-table-column label="操作" width="340">
           <template #default="scope">
             <el-button type="primary" :icon="VideoPlay" circle @click="playNow(scope.row)" />
             <el-button type="warning" icon="Plus" circle @click="addToQueue(scope.row)" />
             <el-button type="primary" :icon="Edit" circle @click="handleEdit(scope.row)" />
             <el-button type="danger" :icon="Delete" circle @click="del(scope.row.musicId)" />
+            <el-button v-if="scope.row.activation === 1" type="primary" @click="freezeMusic(scope.row)">冻结</el-button>
+            <el-button v-if="scope.row.activation === 0" type="success" @click="unfreezeMusic(scope.row)">解冻</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -81,22 +89,18 @@
             <el-form-item label="时长(秒)">
               <el-input v-model="data.form.timelength" autocomplete="off" type="number" />
             </el-form-item>
-            <el-form-item label="标签">
-              <el-select
-                  v-model="data.form.tagIds"
-                  multiple
-                  placeholder="请选择标签"
-                  filterable
-                  style="width: 100%"
-              >
-                <el-option
-                    v-for="tag in data.tagList"
-                    :key="tag.id"
-                    :label="tag.name + '（' + tag.type + '）'"
-                    :value="tag.id"
-                />
-              </el-select>
-            </el-form-item>
+            <template v-for="(options, type) in groupedTags" :key="type">
+              <el-form-item :label="type">
+                <el-select v-model="data.selectedTags[type]" placeholder="请选择" clearable>
+                  <el-option
+                      v-for="tag in options"
+                      :key="tag.id"
+                      :label="tag.name"
+                      :value="tag.id"
+                  />
+                </el-select>
+              </el-form-item>
+            </template>
           </div>
 
           <!-- 右列 -->
@@ -123,14 +127,17 @@
 </template>
 
 <script setup>
-import {reactive, onMounted} from "vue"
+import {reactive, onMounted, computed} from "vue"
 import request from "@/utils/request";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {Delete, Edit, VideoPlay, Plus} from '@element-plus/icons-vue';
-import UploadFile from '@/components/UploadFile.vue'
 import { player } from '@/utils/player'
 
 const playNow = (row) => {
+  if (row.activation === 0) {
+    ElMessage.warning('该歌曲已被冻结，无法播放！')
+    return
+  }
   player.play(row)
 }
 
@@ -144,11 +151,19 @@ const data = reactive({
   pageNum: 1,
   pageSize: 5,
   formVisible: false,
-  form: {
-    tagIds: []
-  },
-  musicName: '',
-  tagList: []
+  form: {},
+  keyword: '',
+  tagList: [],
+  selectedTags: {}
+})
+
+const groupedTags = computed(() => {
+  const groups = {}
+  data.tagList.forEach(tag => {
+    if (!groups[tag.type]) groups[tag.type] = []
+    groups[tag.type].push(tag)
+  })
+  return groups
 })
 
 onMounted(() => {
@@ -165,7 +180,7 @@ const loadTags = () => {
 const load = () => {
   request.get('/music/selectPage', {
     params:{
-      musicName: data.musicName,
+      keyword: data.keyword,
       pageNum: data.pageNum,
       pageSize: data.pageSize
     }
@@ -181,18 +196,20 @@ const reset = () => {
 }
 
 const handleAdd = () =>{
-  data.form = { tagIds: [] };
-  data.formVisible = true;
+  data.form = {}
+  data.selectedTags = {}
+  data.formVisible = true
 }
 
 const save = () => {
+  const tagIds = Object.values(data.selectedTags).filter(Boolean)
   const payload = {
     ...data.form,
-    tags: data.form.tagIds.map(id => ({ id }))
+    tags: tagIds.map(id => ({ id }))
   }
   request.request({
     method: payload.musicId ? 'PUT' : 'POST',
-    url: payload.musicId ? '/music/update' : '/music/add',
+    url: payload.musicId ? '/music/update' : '/music/addWithTags',
     data: payload
   }).then(res => {
     if (res.code === '200') {
@@ -206,10 +223,11 @@ const save = () => {
 }
 
 const handleEdit = (row) => {
-  data.form = {
-    ...row,
-    tagIds: row.tags?.map(t => t.id) || []
-  }
+  data.form = { ...row }
+  data.selectedTags = {}
+  row.tags?.forEach(tag => {
+    data.selectedTags[tag.type] = tag.id
+  })
   data.formVisible = true
 }
 
@@ -225,6 +243,28 @@ const del = (id) => {
     })
   }).catch(err => {
     console.log(err)
+  })
+}
+
+const freezeMusic = (row) => {
+  request.put(`/music/freeze/${row.musicId}`).then(res => {
+    if (res.code === '200') {
+      ElMessage.success('冻结成功')
+      load()
+    } else {
+      ElMessage.error(res.msg)
+    }
+  })
+}
+
+const unfreezeMusic = (row) => {
+  request.put(`/music/unfreeze/${row.musicId}`).then(res => {
+    if (res.code === '200') {
+      ElMessage.success('解冻成功')
+      load()
+    } else {
+      ElMessage.error(res.msg)
+    }
   })
 }
 </script>

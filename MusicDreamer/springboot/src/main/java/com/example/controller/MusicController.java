@@ -55,4 +55,25 @@ public class MusicController {
         PageInfo<Music> pageInfo = musicService.selectPage(musicName, fromSinger, pageNum, pageSize);
         return Result.success(pageInfo);
     }
+
+    @PostMapping("/addWithTags")
+    public Result addWithTags(@RequestBody Music music) {
+        Integer musicId = musicService.add(music);
+        if (music.getTagIds() != null && !music.getTagIds().isEmpty()) {
+            musicService.bindTags(musicId, music.getTagIds());
+        }
+        return Result.success(musicId); // 返回 musicId 可选
+    }
+
+    @PutMapping("/freeze/{id}")
+    public Result freeze(@PathVariable Integer id) {
+        musicService.freezeById(id);
+        return Result.success();
+    }
+    @PutMapping("/unfreeze/{id}")
+    public Result unfreeze(@PathVariable Integer id) {
+        musicService.unfreezeById(id);
+        return Result.success();
+    }
+
 } 

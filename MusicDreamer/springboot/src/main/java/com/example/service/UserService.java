@@ -17,10 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class UserService {
@@ -37,29 +34,6 @@ public class UserService {
     public Map login(User user) {
         String username = user.getUsername();
         String password = user.getPassword();
-//        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-//        //从数据库中查询对应的信息
-//        User dbUser = userMapper.selectByUsername(username);
-//        if(dbUser == null) {
-//            throw new CustomException("账号不存在");
-//        }
-//        else if(dbUser.getActivation()==0) {
-//            throw new CustomException("账号被冻结");
-//        }
-//        else if(!dbUser.getRole().equals(user.getRole())) {
-//            throw new CustomException("请检查用户类型是否选择错误");
-//        }
-//        //校验密码
-//        else if(!passwordEncoder.matches(password, dbUser.getPassword()))
-//            throw new CustomException("用户名或密码错误");
-//        Authentication authenticate = authenticationManager.authenticate(authenticationToken);
-//        UserDetailsImpl authUser = (UserDetailsImpl) authenticate.getPrincipal();
-//        dbUser = authUser.getUser();// 强制类型转换报错，用我们实现的 `UserDetailsImpl` 类中的 getUser 方法
-////        dbUser=((UserDetailsImpl)authenticate.getPrincipal()).getUser();
-//        String jwt = JwtUtil.createJWT(dbUser.getId().toString());
-//        dbUser.setJwt(jwt);
-//        return dbUser;
-
         // 1. 构建认证令牌
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(username, password);
@@ -119,8 +93,11 @@ public class UserService {
     }
 
     public void updateById(User user) {
-        if(user.getPassword()!=null)
+        if (user.getPassword() != null && !"".equals(user.getPassword())) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+        } else {
+            user.setPassword(null);
+        }
         userMapper.updateById(user);
     }
 

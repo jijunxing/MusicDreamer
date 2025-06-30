@@ -1,6 +1,5 @@
-// src/utils/player.js
-
 import { reactive } from 'vue'
+import { ElMessage } from 'element-plus'
 
 export const player = reactive({
     audio: new Audio(),
@@ -10,6 +9,10 @@ export const player = reactive({
 
     play(item) {
         if (!item || !item.musicUrl) return
+        if (item.activation === 0) {
+            ElMessage.warning('该歌曲已被冻结，无法播放！')
+            return
+        }
         this.audio.src = item.musicUrl
         this.audio.play()
         this.current = item
@@ -34,6 +37,11 @@ export const player = reactive({
             return
         }
         const nextItem = this.queue.shift()
+        if (nextItem.activation === 0) {
+            ElMessage.warning('该歌曲已被冻结，无法播放！')
+            this.next()
+            return
+        }
         this.play(nextItem)
     },
 

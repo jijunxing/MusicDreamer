@@ -71,10 +71,7 @@
               <span>歌手信息</span>
             </el-menu-item>
           </el-sub-menu>
-          <el-menu-item index="/admin/person">
-            <el-icon><User /></el-icon>
-            <span>个人资料</span>
-          </el-menu-item>
+          
           <el-sub-menu index="4">
             <template #title>
               <el-icon><Headset /></el-icon>

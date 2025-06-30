@@ -1,15 +1,17 @@
 package com.example.entity;
 
 import java.util.Date;
+import java.util.List;
 import lombok.Data;
 
 @Data
 public class SongList {
     private Integer id;
     private String name;
-    private String image;
-    private String message;
-    private String tags;
+    private String imageUrl;
+    private String about;
     private Integer user;
-    private Date createDate;
+    private String createTime;
+    private List<Music> musics;
+    private Integer musicCount;
 } 

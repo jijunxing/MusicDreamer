@@ -1,127 +1,300 @@
 <template>
-  <div class="songlist-info">
-    <h2>歌单管理</h2>
-    <el-form :inline="true" :model="searchForm" class="search-form">
-      <el-form-item label="歌单名">
-        <el-input v-model="searchForm.name" placeholder="输入歌单名" />
-      </el-form-item>
-      <el-form-item label="用户ID">
-        <el-input v-model="searchForm.user" placeholder="输入用户ID" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="fetchSongLists">查询</el-button>
-        <el-button @click="resetSearch">重置</el-button>
-        <el-button type="success" @click="openAddDialog">新增歌单</el-button>
-      </el-form-item>
-    </el-form>
-    <el-table :data="songLists" style="width: 100%" v-loading="loading">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="歌单名" width="150" />
-      <el-table-column prop="user" label="用户ID" width="100" />
-      <el-table-column prop="tags" label="标签" width="120" />
-      <el-table-column prop="createDate" label="创建时间" width="150" />
-      <el-table-column prop="image" label="封面" width="120">
-        <template #default="scope">
-          <img :src="scope.row.image" alt="封面" style="width: 60px; height: 60px; object-fit: cover;" />
-        </template>
-      </el-table-column>
-      <el-table-column prop="message" label="简介" />
-      <el-table-column label="操作" width="200">
-        <template #default="scope">
-          <el-button size="mini" @click="editSongList(scope.row)">编辑</el-button>
-          <el-button size="mini" type="danger" @click="deleteSongList(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-dialog :visible.sync="dialogVisible" :title="dialogTitle">
-      <el-form :model="editForm">
+  <div>
+    <div class="card" style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+      <el-input
+          prefix-icon="Search"
+          style="width: 300px"
+          placeholder="请输入歌单名或用户ID"
+          v-model="data.keyword"
+          clearable
+      />
+      <el-button type="primary" @click="load">查询</el-button>
+      <el-button type="info" @click="reset">重置</el-button>
+    </div>
+
+    <div class="card" style="margin-bottom: 10px">
+      <div style="margin-bottom: 10px">
+        <el-button type="primary" @click="handleAdd">新增</el-button>
+      </div>
+      <el-table :data="data.tableData" style="width: 100%">
+        <el-table-column prop="id" label="ID" width="70"/>
+        <el-table-column prop="name" label="歌单名"/>
+        <el-table-column prop="imageUrl" label="封面">
+          <template v-slot="scope">
+            <el-image
+                v-if="scope.row.imageUrl"
+                :src="scope.row.imageUrl"
+                :preview-src-list="[scope.row.imageUrl]"
+                :preview-teleported="true"
+                append-to-body
+                style="width: 50px; height: 50px; border-radius: 10%; cursor: pointer"
+                fit="cover"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="about" label="简介"/>
+        <el-table-column prop="musicCount" label="包含音乐数"/>
+        <el-table-column prop="user" label="用户ID"/>
+        <el-table-column prop="createTime" label="创建时间"/>
+        <el-table-column label="操作" width="200">
+          <template #default="scope">
+            <el-button type="primary" @click="viewMusics(scope.row)">查看歌曲</el-button>
+            <el-button type="primary" :icon="Edit" circle @click="handleEdit(scope.row)" />
+            <el-button type="danger" :icon="Delete" circle @click="del(scope.row.id)" />
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <div class="card" v-if="data.total">
+      <el-pagination background layout="prev, pager, next" @current-change="load" :page-size="data.pageSize" v-model:current-page="data.pageNum" :total="data.total"/>
+    </div>
+
+    <el-dialog v-model="data.formVisible" title="歌单信息" width="30%">
+      <el-form :model="data.form" label-width="100px">
         <el-form-item label="歌单名">
-          <el-input v-model="editForm.name" />
+          <el-input v-model="data.form.name" autocomplete="off" />
         </el-form-item>
-        <el-form-item label="标签">
-          <el-input v-model="editForm.tags" />
+        <el-form-item label="封面">
+          <UploadFile v-model="data.form.imageUrl" type="image" />
         </el-form-item>
         <el-form-item label="简介">
-          <el-input v-model="editForm.message" />
-        </el-form-item>
-        <el-form-item label="封面URL">
-          <UploadFile v-model="editForm.image" type="image" />
+          <el-input v-model="data.form.about" autocomplete="off" />
         </el-form-item>
         <el-form-item label="用户ID">
-          <el-input v-model="editForm.user" />
+          <el-input v-model="data.form.user" autocomplete="off" />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="saveSongList">确 定</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="data.formVisible = false">取消</el-button>
+          <el-button type="primary" @click="save">保存</el-button>
+        </div>
+      </template>
     </el-dialog>
+
+    <el-dialog v-model="data.musicDialogVisible" title="歌单歌曲" width="60%">
+      <el-button type="primary" style="margin-bottom: 10px;" @click="openAddMusicDialog">添加歌曲</el-button>
+
+      <el-table :data="data.currentMusics" style="width: 100%">
+        <el-table-column prop="musicId" label="ID" width="70"/>
+        <el-table-column prop="musicName" label="歌曲名"/>
+        <el-table-column prop="singerName" label="歌手"/>
+        <el-table-column prop="listenNumb" label="播放量"/>
+        <el-table-column prop="activation" label="状态">
+          <template #default="scope">
+            <el-tag type="success" v-if="scope.row.activation === 1">激活</el-tag>
+            <el-tag type="primary" v-if="scope.row.activation === 0">冻结</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100">
+          <template #default="scope">
+            <el-button type="danger" size="small" @click="removeMusic(scope.row.musicId)">移除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="data.musicDialogVisible = false">关闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="data.addMusicDialogVisible" title="添加歌曲到歌单" width="60%">
+      <!-- 搜索栏 -->
+      <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <el-input
+            v-model="data.searchKeyword"
+            placeholder="请输入歌曲名或歌手"
+            clearable
+            style="flex: 1"
+        />
+        <el-button type="primary" @click="loadSelectableMusics">搜索</el-button>
+      </div>
+
+      <!-- 可选歌曲列表 -->
+      <el-table
+          :data="data.selectableMusics"
+          style="width: 100%"
+          height="300"
+          @selection-change="handleSelectChange"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="musicName" label="歌曲名" />
+        <el-table-column prop="singerName" label="歌手" />
+      </el-table>
+
+      <template #footer>
+        <el-button @click="data.addMusicDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="addSelectedMusicsToSonglist">批量添加</el-button>
+      </template>
+    </el-dialog>
+
+
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
-import UploadFile from '@/components/UploadFile.vue'
+import {reactive, onMounted} from "vue"
+import request from "@/utils/request";
+import {ElMessage, ElMessageBox} from "element-plus";
+import {Delete, Edit} from '@element-plus/icons-vue';
 
-const songLists = ref([])
-const loading = ref(false)
-const dialogVisible = ref(false)
-const dialogTitle = ref('')
-const editForm = reactive({})
-const searchForm = reactive({ name: '', user: '' })
+const data = reactive({
+  tableData: [],
+  total: 0,
+  pageNum: 1,
+  pageSize: 10,
+  formVisible: false,
+  form: {},
+  keyword: '',
+  musicDialogVisible: false,
+  currentMusics: [],
+  musicDialogSonglistId : null,
+  addMusicDialogVisible : false,
+  selectableMusics:[],
+  selectedMusicIds:[],
+  searchKeyword : '',
+  allMusics: [],
+  selectedMusicId: null
+})
 
-const fetchSongLists = async () => {
-  loading.value = true
-  const { data } = await request.get('/songlist/selectAll', { params: searchForm })
-  songLists.value = data.data || []
-  loading.value = false
+onMounted(() => {
+  load()
+})
+
+const load = () => {
+  request.get('/songlist/selectPage', {
+    params:{
+      name: data.keyword,
+      pageNum: data.pageNum,
+      pageSize: data.pageSize
+    }
+  }).then(res => {
+    data.tableData = res.data?.list || []
+    data.total = res.data.total
+  })
 }
 
-const resetSearch = () => {
-  searchForm.name = ''
-  searchForm.user = ''
-  fetchSongLists()
+const reset = () => {
+  data.keyword = '';
+  load();
 }
 
-const openAddDialog = () => {
-  Object.assign(editForm, { id: null, name: '', tags: '', message: '', image: '', user: '' })
-  dialogTitle.value = '新增歌单'
-  dialogVisible.value = true
+const handleAdd = () =>{
+  data.form = {}
+  data.formVisible = true
 }
 
-const editSongList = (row) => {
-  Object.assign(editForm, row)
-  dialogTitle.value = '编辑歌单'
-  dialogVisible.value = true
+const save = () => {
+  request.request({
+    method: data.form.id ? 'PUT' : 'POST',
+    url: data.form.id ? '/songlist/update' : '/songlist/add',
+    data: data.form
+  }).then(res => {
+    if (res.code === '200') {
+      ElMessage.success('保存成功')
+      data.formVisible = false
+      load()
+    } else {
+      ElMessage.error(res.msg)
+    }
+  })
 }
 
-const saveSongList = async () => {
-  if (editForm.id) {
-    await request.put('/songlist/update', editForm)
-    ElMessage.success('更新成功')
-  } else {
-    await request.post('/songlist/add', editForm)
-    ElMessage.success('新增成功')
-  }
-  dialogVisible.value = false
-  fetchSongLists()
+const handleEdit = (row) => {
+  data.form = { ...row }
+  data.formVisible = true
 }
 
-const deleteSongList = async (row) => {
-  await request.delete(`/songlist/delete/${row.id}`)
-  ElMessage.success('删除成功')
-  fetchSongLists()
+const del = (id) => {
+  ElMessageBox.confirm('删除后数据无法恢复,您确认要删除吗？', '确认删除', {type:'warning'}).then(res => {
+    request.delete('/songlist/delete/'+id).then(res => {
+      if(res.code === '200'){
+        ElMessage.success('操作成功')
+        load()
+      } else {
+        ElMessage.error(res.msg)
+      }
+    })
+  }).catch(err => {
+    console.log(err)
+  })
 }
 
-onMounted(fetchSongLists)
+// 移除歌曲
+const removeMusic = (musicId) => {
+  request.delete(`/songlist/removeMusic`, {
+    params: {
+      songlistId: data.musicDialogSonglistId,
+      musicId: musicId
+    }
+  }).then(res => {
+    if (res.code === '200') {
+      ElMessage.success('移除成功')
+      loadSonglistMusics(data.musicDialogSonglistId)
+    } else {
+      ElMessage.error(res.msg)
+    }
+  })
+}
+
+// 打开“查看歌曲”弹窗，并记录当前歌单ID
+const viewMusics = (row) => {
+  data.musicDialogSonglistId = row.id
+  data.currentMusics = row.musics
+  data.musicDialogVisible = true
+}
+
+// 打开添加歌曲弹窗
+const openAddMusicDialog = () => {
+  data.searchKeyword = ''
+  data.selectedMusicIds = []
+  loadSelectableMusics()
+  data.addMusicDialogVisible = true
+}
+
+// 加载当前歌单可添加的歌曲（排除已有的）
+const loadSelectableMusics = () => {
+  request.get('/songlist/selectForSonglist', {
+    params: {
+      keyword: data.searchKeyword,
+      excludeSonglistId: data.musicDialogSonglistId
+    }
+  }).then(res => {
+    data.selectableMusics = res.data || []
+  })
+}
+
+// 表格多选监听
+const handleSelectChange = (selection) => {
+  data.selectedMusicIds = selection.map(item => item.musicId)
+}
+
+// 批量添加歌曲
+// const addSelectedMusicsToSonglist = () => {
+//   if (!data.selectedMusicIds.length) {
+//     ElMessage.warning('请先选择歌曲')
+//     return
+//   }
+//
+//   request.post('/songlist/addMusics', {
+//     songlistId: data.musicDialogSonglistId,
+//     musicIds: data.selectedMusicIds
+//   }).then(res => {
+//     if (res.code === '200') {
+//       ElMessage.success('添加成功')
+//       data.addMusicDialogVisible = false
+//       loadSonglistMusics(data.musicDialogSonglistId)
+//     } else {
+//       ElMessage.error(res.msg)
+//     }
+//   })
+// }
 </script>
 
 <style scoped>
-.songlist-info {
-  padding: 20px;
-}
 .search-form {
   margin-bottom: 20px;
 }
