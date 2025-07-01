@@ -5,8 +5,8 @@
 <mapper namespace="com.example.mapper.MusicMapper">
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="musicId">
-        insert into music (music_name, music_url, image_url, from_singer, lyric, timelength, activation, creat_time, listen_numb)
-        values(#{musicName}, #{musicUrl}, #{imageUrl}, #{fromSinger}, #{lyric}, #{timelength}, #{activation}, #{creatTime}, #{listenNumb})
+        insert into music (music_name, music_url, image_url, from_singer, lyric_url, timelength, activation, create_time, listen_numb)
+        values(#{musicName}, #{musicUrl}, #{imageUrl}, #{fromSinger}, #{lyricUrl}, #{timelength}, #{activation}, #{createTime}, #{listenNumb})
     </insert>
 
     <delete id="deleteById">
@@ -20,10 +20,10 @@
             <if test="musicUrl != null">music_url = #{musicUrl},</if>
             <if test="imageUrl != null">image_url = #{imageUrl},</if>
             <if test="fromSinger != null">from_singer = #{fromSinger},</if>
-            <if test="lyric != null">lyric = #{lyric},</if>
+            <if test="lyricUrl != null">lyric_url = #{lyricUrl},</if>
             <if test="timelength != null">timelength = #{timelength},</if>
             <if test="activation != null">activation = #{activation},</if>
-            <if test="creatTime != null">creat_time = #{creatTime},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
             <if test="listenNumb != null">listen_numb = #{listenNumb}</if>
         </set>
         where music_id = #{musicId}
@@ -37,8 +37,8 @@
             <if test="musicName != null">
                 m.music_name LIKE CONCAT('%', #{musicName}, '%')
             </if>
-            <if test="fromSinger != null">
-                AND m.from_singer = #{fromSinger}
+            <if test="singerName != null">
+                OR u.username LIKE CONCAT('%',#{singerName},'%')
             </if>
         </where>
         ORDER BY m.music_id ASC

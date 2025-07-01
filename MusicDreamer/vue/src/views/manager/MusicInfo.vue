@@ -45,6 +45,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="singerName" label="歌手用户名"/>
+        <el-table-column prop="timelength" label="时长(秒)"/>
         <el-table-column prop="listenNumb" label="播放量"/>
         <el-table-column label="状态">
           <template #default="scope">
@@ -80,15 +81,20 @@
             <el-form-item label="封面">
               <UploadFile v-model="data.form.imageUrl" type="image" />
             </el-form-item>
-            <el-form-item label="音乐文件">
+            <el-form-item label="音频(.mp3)">
               <UploadFile v-model="data.form.musicUrl" type="music" />
             </el-form-item>
+            <el-form-item label="歌词(.lrc)">
+              <UploadFile v-model="data.form.lyricUrl" type="lrc" />
+            </el-form-item>
+          </div>
+
+          <!-- 右列 -->
+          <div style="flex: 1;">
             <el-form-item label="歌手ID">
               <el-input v-model="data.form.fromSinger" autocomplete="off" />
             </el-form-item>
-            <el-form-item label="时长(秒)">
-              <el-input v-model="data.form.timelength" autocomplete="off" type="number" />
-            </el-form-item>
+
             <template v-for="(options, type) in groupedTags" :key="type">
               <el-form-item :label="type">
                 <el-select v-model="data.selectedTags[type]" placeholder="请选择" clearable>
@@ -101,18 +107,6 @@
                 </el-select>
               </el-form-item>
             </template>
-          </div>
-
-          <!-- 右列 -->
-          <div style="flex: 1;">
-            <el-form-item label="歌词">
-              <el-input
-                  type="textarea"
-                  v-model="data.form.lyric"
-                  :rows="10"
-                  placeholder="请输入歌词内容或路径"
-              />
-            </el-form-item>
           </div>
         </div>
       </el-form>
@@ -180,7 +174,8 @@ const loadTags = () => {
 const load = () => {
   request.get('/music/selectPage', {
     params:{
-      keyword: data.keyword,
+      musicName: data.keyword,
+      singerName: data.keyword,
       pageNum: data.pageNum,
       pageSize: data.pageSize
     }

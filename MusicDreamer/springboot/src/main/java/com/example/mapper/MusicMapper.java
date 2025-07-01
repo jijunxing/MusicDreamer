@@ -10,7 +10,7 @@ public interface MusicMapper {
     void updateById(Music music);
     @Select("select music.*, user.username as singerName from music left join user on music.from_singer = user.id where music_id = #{id}")
     Music selectById(Integer id);
-    List<Music> selectAll(String musicName, Integer fromSinger);
+    List<Music> selectAll(String musicName, String singerName);
     void insertMusicTags(Integer musicId, List<Integer> tagIds);
     void deleteMusicTags(Integer musicId);
 

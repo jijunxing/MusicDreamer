@@ -26,6 +26,11 @@
             <el-tag type="success" v-if="scope.row.activation === 1">激活</el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="about" label="简介" min-width="150">
+          <template #default="scope">
+            <div class="text-ellipsis" :title="scope.row.about">{{ scope.row.about || '暂无简介' }}</div>
+          </template>
+        </el-table-column>
         <el-table-column prop="phone" label="手机号" />
         <el-table-column prop="email" label="邮箱" />
         <el-table-column label="操作" width="180">
@@ -84,6 +89,14 @@
                   type="password"
                   show-password
                   placeholder="留空代表默认或不修改"
+              />
+            </el-form-item>
+            <el-form-item label="简介">
+              <el-input
+                  v-model="data.form.about"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="请输入用户简介"
               />
             </el-form-item>
           </div>
@@ -208,3 +221,11 @@ const unfrozenAccount = (row) => {
 
 load()
 </script>
+
+<style scoped>
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>

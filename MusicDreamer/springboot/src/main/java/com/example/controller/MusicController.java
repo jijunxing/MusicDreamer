@@ -1,6 +1,5 @@
 package com.example.controller;
 
-import com.example.mapper.TagMapper;
 import com.example.util.Result;
 import com.example.entity.Music;
 import com.example.service.MusicService;
@@ -42,17 +41,19 @@ public class MusicController {
         return Result.success(music);
     }
     @GetMapping("/selectAll")
-    public Result selectAll(String musicName, Integer fromSinger){
-        List<Music> list = musicService.selectAll(musicName, fromSinger);
+    public Result selectAll(String musicName, String singerName){
+        List<Music> list = musicService.selectAll(musicName, singerName);
         return Result.success(list);
     }
     @GetMapping("/selectPage")
     public Result selectPage(
             String musicName,
-            Integer fromSinger,
+            String singerName,
+            String keyword,
             @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize){
-        PageInfo<Music> pageInfo = musicService.selectPage(musicName, fromSinger, pageNum, pageSize);
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        PageInfo<Music> pageInfo;
+        pageInfo = musicService.selectPage(musicName, singerName, pageNum, pageSize);
         return Result.success(pageInfo);
     }
 

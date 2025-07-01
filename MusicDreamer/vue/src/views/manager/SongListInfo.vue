@@ -17,9 +17,9 @@
         <el-button type="primary" @click="handleAdd">新增</el-button>
       </div>
       <el-table :data="data.tableData" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="70"/>
-        <el-table-column prop="name" label="歌单名"/>
-        <el-table-column prop="imageUrl" label="封面">
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="name" label="歌单名" min-width="120" />
+        <el-table-column prop="imageUrl" label="封面" width="80">
           <template v-slot="scope">
             <el-image
                 v-if="scope.row.imageUrl"
@@ -32,13 +32,14 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="about" label="简介"/>
-        <el-table-column prop="musicCount" label="包含音乐数"/>
-        <el-table-column prop="user" label="用户ID"/>
-        <el-table-column prop="createTime" label="创建时间"/>
-        <el-table-column label="操作" width="200">
+        <el-table-column prop="about" label="简介" min-width="200" />
+        <el-table-column prop="musicCount" label="音乐数" width="80" />
+        <el-table-column prop="user" label="用户ID" width="100" />
+        <el-table-column prop="createTime" label="创建时间" min-width="160" />
+        <el-table-column label="操作" min-width="280">
           <template #default="scope">
             <el-button type="primary" @click="viewMusics(scope.row)">查看歌曲</el-button>
+            <el-button type="success" :icon="VideoPlay" circle @click="playSonglist(scope.row)"></el-button>
             <el-button type="primary" :icon="Edit" circle @click="handleEdit(scope.row)" />
             <el-button type="danger" :icon="Delete" circle @click="del(scope.row.id)" />
           </template>
@@ -77,7 +78,7 @@
       <el-button type="primary" style="margin-bottom: 10px;" @click="openAddMusicDialog">添加歌曲</el-button>
 
       <el-table :data="data.currentMusics" style="width: 100%">
-        <el-table-column prop="musicId" label="ID" width="70"/>
+        <el-table-column prop="musicId" label="ID"/>
         <el-table-column prop="musicName" label="歌曲名"/>
         <el-table-column prop="singerName" label="歌手"/>
         <el-table-column prop="listenNumb" label="播放量"/>
@@ -87,9 +88,11 @@
             <el-tag type="primary" v-if="scope.row.activation === 0">冻结</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100">
+        <el-table-column label="操作">
           <template #default="scope">
-            <el-button type="danger" size="small" @click="removeMusic(scope.row.musicId)">移除</el-button>
+            <el-button type="success" size="small" :icon="VideoPlay" circle @click="playMusic(scope.row)"></el-button>
+            <el-button type="warning" size="small" :icon="Plus" circle @click="addToQueue(scope.row)"></el-button>
+            <el-button type="danger" size="small" :icon="Delete" circle @click="removeMusic(scope.row.musicId)"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -139,7 +142,9 @@
 import {reactive, onMounted} from "vue"
 import request from "@/utils/request";
 import {ElMessage, ElMessageBox} from "element-plus";
-import {Delete, Edit} from '@element-plus/icons-vue';
+import {Delete, Edit, Plus, VideoPlay} from '@element-plus/icons-vue';
+import UploadFile from "@/components/UploadFile.vue";
+import {player} from "@/utils/player";
 
 const data = reactive({
   tableData: [],
@@ -188,6 +193,7 @@ const handleAdd = () =>{
 }
 
 const save = () => {
+  console.log(data.form)
   request.request({
     method: data.form.id ? 'PUT' : 'POST',
     url: data.form.id ? '/songlist/update' : '/songlist/add',
@@ -227,7 +233,7 @@ const del = (id) => {
 const removeMusic = (musicId) => {
   request.delete(`/songlist/removeMusic`, {
     params: {
-      songlistId: data.musicDialogSonglistId,
+      listId: data.musicDialogSonglistId,
       musicId: musicId
     }
   }).then(res => {
@@ -272,30 +278,60 @@ const handleSelectChange = (selection) => {
   data.selectedMusicIds = selection.map(item => item.musicId)
 }
 
-// 批量添加歌曲
-// const addSelectedMusicsToSonglist = () => {
-//   if (!data.selectedMusicIds.length) {
-//     ElMessage.warning('请先选择歌曲')
-//     return
-//   }
-//
-//   request.post('/songlist/addMusics', {
-//     songlistId: data.musicDialogSonglistId,
-//     musicIds: data.selectedMusicIds
-//   }).then(res => {
-//     if (res.code === '200') {
-//       ElMessage.success('添加成功')
-//       data.addMusicDialogVisible = false
-//       loadSonglistMusics(data.musicDialogSonglistId)
-//     } else {
-//       ElMessage.error(res.msg)
-//     }
-//   })
-// }
+//批量添加歌曲
+const addSelectedMusicsToSonglist = () => {
+  if (!data.selectedMusicIds.length) {
+    ElMessage.warning('请先选择歌曲')
+    return
+  }
+
+  request.post('/songlist/addMusics',{
+      listId: data.musicDialogSonglistId,
+      musicIds: data.selectedMusicIds
+  }).then(res => {
+    if (res.code === '200') {
+      ElMessage.success('添加成功')
+      data.addMusicDialogVisible = false
+      loadSonglistMusics(data.musicDialogSonglistId)
+    } else {
+      ElMessage.error(res.msg)
+    }
+  })
+}
+
+const loadSonglistMusics = (listId) => {
+  if (!listId) return
+
+  request.get(`/songlist/selectById/${listId}`).then(res => {
+    if (res.code === '200') {
+      data.currentMusics = res.data.musics || []
+    } else {
+      ElMessage.error('加载歌曲失败')
+    }
+  })
+}
+
+const playMusic = (row) => {
+  player.play(row)
+}
+
+const addToQueue = (row) => {
+  player.addToQueue(row)
+}
+
+const playSonglist = (row) => {
+  if(row.musics.length === 0){
+    ElMessage.warning("歌单为空")
+    return
+  }
+  player.clear()
+  row.musics?.forEach(music => player.addToQueue(music))
+  ElMessage.success('歌单已加入播放队列')
+}
 </script>
 
 <style scoped>
 .search-form {
   margin-bottom: 20px;
 }
-</style> 
+</style>

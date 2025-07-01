@@ -22,16 +22,15 @@ const router = createRouter({
         { path: 'songlist', name: 'SongListInfo', component: () => import('@/views/manager/SongListInfo.vue')},
       ]
     },
-    // {
-    //   path: '/user',
-    //   name: 'user',
-    //   component: () => import('@/views/UserInfo.vue'),
-    //   redirect: '/user/home',
-    //   children: [
-    //     { path: 'home', name: 'Home', component: () => import('@/views/user/ManagerHome.vue')},
-    //     { path: 'personal', name: 'PersonalInfo', component: () => import('@/views/user/personalInfo.vue')},
-    //   ]
-    // },
+    {
+      path: '/user',
+      name: 'user',
+      component: () => import('@/views/User.vue'),
+      children: [
+        { path: 'home', name: 'Home', component: () => import('@/views/user/ManagerHome.vue')},
+        { path: 'personal', name: 'PersonalInfo', component: () => import('@/views/user/personalInfo.vue')},
+      ]
+    },
   ]
 })
 

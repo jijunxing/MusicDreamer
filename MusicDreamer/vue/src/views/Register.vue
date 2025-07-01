@@ -104,7 +104,7 @@ const form = reactive({
 const rules = reactive({
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 6, message: '用户名应在 2 到 6 个字符之间', trigger: 'blur' }
+    { min: 2, max: 20, message: '用户名应在 2 到 20 个字符之间', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },

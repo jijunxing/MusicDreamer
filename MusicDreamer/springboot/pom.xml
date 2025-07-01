@@ -95,5 +95,12 @@
             <version>24.0.1</version> <!-- 使用最新稳定版本 -->
             <scope>compile</scope> <!-- 可选，默认即为compile -->
         </dependency>
+
+        <!-- mp3文件支持(如语音时长)-->
+        <dependency>
+            <groupId>org</groupId>
+            <artifactId>jaudiotagger</artifactId>
+            <version>2.0.1</version>
+        </dependency>
     </dependencies>
 </project>

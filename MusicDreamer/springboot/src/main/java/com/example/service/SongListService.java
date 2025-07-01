@@ -5,11 +5,14 @@ import com.example.entity.Music;
 import com.example.entity.SongList;
 import com.example.mapper.MusicMapper;
 import com.example.mapper.SongListMapper;
+import com.example.util.Result;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
@@ -75,4 +78,14 @@ public class SongListService {
         List<Integer> existingIds = songListMapper.selectMusicIdsByListId(excludeSonglistId);
         return musicMapper.selectByKeywordExcludingIds(keyword, existingIds);
     }
+
+    public void addMusics(Map<String, Object> body) {
+        Integer listId = (Integer) body.get("listId");
+        List<Integer> musicIds = (List<Integer>) body.get("musicIds");
+
+        for (Integer musicId : musicIds) {
+            songListMapper.addMusicToList(listId, musicId);
+        }
+    }
+
 }

@@ -50,12 +50,11 @@ public class SecurityConfig {
                         .requestMatchers("/user/update").hasAnyRole("USER","ADMIN","SINGER")
 
                         // 多角色可访问的模块
-                        .requestMatchers("/music/**", "/files/upload", "/tags/**", "/notice/**","/user/**","/songlist/**"
+                        .requestMatchers("/music/**", "/files/upload", "/tags/**", "/notice/**","/songlist/**"
                         ).hasAnyRole("USER", "ADMIN", "SINGER")
 
                         // ADMIN专属路径
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-
+                        .requestMatchers("/admin/**","/user/**").hasRole("ADMIN")
 
                         // 其他请求需要认证
                         .anyRequest().authenticated()

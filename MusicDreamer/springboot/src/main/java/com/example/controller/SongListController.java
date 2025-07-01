@@ -1,12 +1,18 @@
 package com.example.controller;
 
 import com.example.entity.Music;
+import com.example.mapper.SongListMapper;
+import com.example.service.MusicService;
 import com.example.util.Result;
 import com.example.entity.SongList;
 import com.example.service.SongListService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @CrossOrigin
 @RestController
@@ -14,7 +20,8 @@ import java.util.List;
 public class SongListController {
     @Resource
     private SongListService songListService;
-
+    @Resource
+    private SongListMapper songListMapper;
     @PostMapping("/add")
     public Result add(@RequestBody SongList songList) {
         songListService.add(songList);
@@ -75,12 +82,10 @@ public class SongListController {
         return Result.success(musics);
     }
 
-//    @PostMapping("/addMusics")
-//    public Result addMusics(@RequestBody SonglistMusicBatchAddDto dto) {
-//        for(Long musicId : dto.getMusicIds()) {
-//            songlistMusicMapper.insert(dto.getSonglistId(), musicId);
-//        }
-//        return Result.success();
-//    }
+    @PostMapping("/addMusics")
+    public Result addMusics(@RequestBody Map<String, Object> body) {
+        songListService.addMusics(body);
+        return Result.success();
+    }
 
 } 

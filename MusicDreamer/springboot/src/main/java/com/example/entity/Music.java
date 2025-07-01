@@ -12,7 +12,7 @@ public class Music {
     private String imageUrl;
     private Integer fromSinger;
     private String singerName;
-    private String lyric;
+    private String lyricUrl;
     private Integer timelength;
     private Integer activation;
     private String createTime;

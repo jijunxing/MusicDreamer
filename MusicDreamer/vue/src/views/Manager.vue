@@ -201,10 +201,7 @@ const handleAvatarError = () => {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
-.welcome-text {
-  color: #409EFF;
-  font-size: 14px;
-}
+
 
 .admin-text {
   color: #F56C6C;
