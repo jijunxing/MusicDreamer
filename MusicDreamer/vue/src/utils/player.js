@@ -1,59 +1,127 @@
 import { reactive } from 'vue'
-import { ElMessage } from 'element-plus'
 
 export const player = reactive({
-    audio: new Audio(),
-    queue: [],               // 播放队列
-    current: null,           // 当前播放项 { musicName, musicUrl }
+    queue: [],
+    current: null,
     isPlaying: false,
+    audio: null, // 改为初始化为 null
+    listeners: new Set(), // 状态监听器集合
 
-    play(item) {
-        if (!item || !item.musicUrl) return
-        if (item.activation === 0) {
-            ElMessage.warning('该歌曲已被冻结，无法播放！')
-            return
-        }
-        this.audio.src = item.musicUrl
-        this.audio.play()
-        this.current = item
-        this.isPlaying = true
+    // 新增方法：设置音频元素并初始化事件监听
+    setAudioElement(audioElement) {
+        this.audio = audioElement;
+        this.initAudioEvents(); // 初始化音频事件监听
     },
 
-    toggle() {
-        if (!this.audio.src) return
-        if (this.isPlaying) {
-            this.audio.pause()
-        } else {
-            this.audio.play()
+    // 新增方法：初始化音频事件监听
+    initAudioEvents() {
+        if (!this.audio) return;
+
+        this.audio.addEventListener('play', () => {
+            this.isPlaying = true;
+            this.notify();
+        });
+
+        this.audio.addEventListener('pause', () => {
+            this.isPlaying = false;
+            this.notify();
+        });
+
+        this.audio.addEventListener('ended', () => {
+            this.next();
+        });
+
+        this.audio.addEventListener('timeupdate', () => {
+            this.notify();
+        });
+    },
+
+    // 新增方法：通知所有监听器
+    notify() {
+        this.listeners.forEach(fn => fn());
+    },
+
+    async play(song) {
+        if (!this.audio) return;
+
+        this.current = song;
+
+        // 移除之前绑定的canplay事件，避免重复触发
+        this.audio.oncanplay = null;
+
+        this.audio.src = song.musicUrl;
+
+        await new Promise((resolve, reject) => {
+            const onCanPlay = () => {
+                this.audio.oncanplay = null;
+                resolve();
+            };
+            const onError = (e) => {
+                this.audio.oncanplay = null;
+                reject(e);
+            };
+
+            this.audio.oncanplay = onCanPlay;
+            this.audio.onerror = onError;
+
+            // 兼容性处理，如果已经可以播放直接resolve
+            if (this.audio.readyState >= 3) { // HAVE_FUTURE_DATA or better
+                this.audio.oncanplay = null;
+                resolve();
+            }
+        });
+
+        try {
+            await this.audio.play();
+            this.isPlaying = true;
+        } catch (err) {
+            console.warn('播放失败', err);
+            this.isPlaying = false;
         }
-        this.isPlaying = !this.isPlaying
+
+        // 避免重复加入队列
+        const exists = this.queue.find(m => m.musicId === song.musicId);
+        if (!exists) {
+            this.queue.push(song);
+        }
+
+        this.notify();
+    },
+
+    // 其他方法保持不变...
+    addToQueue(song) {
+        const exists = this.queue.find(m => m.musicId === song.musicId);
+        if (!exists) {
+            this.queue.push(song);
+            this.notify(); // 添加队列变更通知
+        }
     },
 
     next() {
-        if (this.queue.length === 0) {
-            this.current = null
-            this.audio.src = ''
-            this.isPlaying = false
-            return
+        const currentIndex = this.queue.findIndex(m => m.musicId === this.current?.musicId)
+        if (currentIndex !== -1 && currentIndex < this.queue.length - 1) {
+            this.play(this.queue[currentIndex + 1])
         }
-        const nextItem = this.queue.shift()
-        if (nextItem.activation === 0) {
-            ElMessage.warning('该歌曲已被冻结，无法播放！')
-            this.next()
-            return
-        }
-        this.play(nextItem)
+        this.notify()
     },
 
-    addToQueue(item) {
-        this.queue.push(item)
-        if (!this.isPlaying && !this.current) {
-            this.next()
+    prev() {
+        const currentIndex = this.queue.findIndex(m => m.musicId === this.current?.musicId)
+        if (currentIndex > 0) {
+            this.play(this.queue[currentIndex - 1])
         }
-    }
-})
+    },
 
-// 自动播放下一首
-player.audio.addEventListener('ended', () => {
-    player.next()
+    toggle() {
+        if (!this.audio) return;
+        if (!this.current && this.queue.length > 0) {
+            this.play(this.queue[0]);
+        } else if (this.isPlaying) {
+            this.audio.pause();
+        } else {
+            this.audio.play().catch(err => {
+                console.warn("播放失败", err);
+            });
+        }
+    },
 })
