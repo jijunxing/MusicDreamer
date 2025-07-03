@@ -49,7 +49,8 @@ export const player = reactive({
         // 移除之前绑定的canplay事件，避免重复触发
         this.audio.oncanplay = null;
 
-        this.audio.src = song.musicUrl;
+        // ✅ 统一编码 URL，防止中文路径引发的问题
+        this.audio.src = encodeURI(song.musicUrl);
 
         await new Promise((resolve, reject) => {
             const onCanPlay = () => {
@@ -64,8 +65,8 @@ export const player = reactive({
             this.audio.oncanplay = onCanPlay;
             this.audio.onerror = onError;
 
-            // 兼容性处理，如果已经可以播放直接resolve
-            if (this.audio.readyState >= 3) { // HAVE_FUTURE_DATA or better
+            // 若已经可播放直接 resolve
+            if (this.audio.readyState >= 3) {
                 this.audio.oncanplay = null;
                 resolve();
             }
@@ -87,6 +88,7 @@ export const player = reactive({
 
         this.notify();
     },
+
 
     // 其他方法保持不变...
     addToQueue(song) {

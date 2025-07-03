@@ -5,13 +5,12 @@
         <!-- 歌曲信息 -->
         <!-- 歌曲信息 + 封面 -->
         <div class="info-and-cover">
-          <div class="song-info">
-            <span class="song-title">{{ currentMusic.musicName || '歌名'}}</span>
-            <span class="separator">———</span>
-            <span class="song-artist">{{ currentMusic.singerName || '歌手' }}</span>
+          <div class="song-info-vertical">
+            <div class="song-title-vertical">{{ currentMusic.musicName || '歌名'}}</div>
+            <div class="song-artist-vertical">{{ currentMusic.singerName || '歌手' }}</div>
           </div>
           <div class="cover-wrapper" :class="{ rotating: isMusicPlaying }">
-            <img :src="currentMusic.imageUrl ||  'https://www.bing.com/th/id/OIP.bdx_XoTmIk_1rlUlI6I41gHaHa?w=209&h=211&c=8&rs=1&qlt=90&o=6&cb=ircwebpc1&dpr=1.5&pid=3.1&rm=2'" alt="封面" class="cover-image" />
+            <img :src="coverUrl" @error="handleCoverError" alt="封面" class="cover-image" />
           </div>
         </div>
 
@@ -43,13 +42,13 @@
 
           <!-- 音量控制 -->
           <div class="volume-control" @mouseenter="showVolume = true" @mouseleave="showVolume = false">
-            <button class="volume-btn" :title="isMuted ? '取消静音' : '静音'">
+            <button class="volume-btn" :title="isMuted ? '取消静音' : '静音'" @click="toggleMute">
               <Icon :icon="isMuted ? 'mdi:volume-off' : 'mdi:volume-high'" />
             </button>
             <transition name="slide-down">
               <div class="volume-slider" v-show="showVolume">
                 <input type="range" min="0" max="1" step="0.01" v-model.number="volume" @input="handleVolumeChange"
-                       class="vertical-slider" />
+                       class="vertical-slider" :style="{'--volume-percent': volume * 100 + '%'}" />
               </div>
             </transition>
           </div>
@@ -72,45 +71,59 @@
       </transition>
     </div>
 
-    <audio ref="bgMusic" :src="player.current?.musicUrl" @ended="handleNext" />
+    <audio ref="bgMusic" @ended="handleNext" crossorigin="anonymous" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { player } from "@/utils/player"
 import { Icon } from '@iconify/vue'
+import defaultCover from "@/assets/imgs/default_cover.svg";
 const showPlaylist = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
 const volume = ref(0.8)
 const isMuted = ref(false)
 const showVolume = ref(false)
-
 const bgMusic = ref(null)
 const playerRef = ref(null)
 const currentMusic = computed(() =>
     player.current || { name: '无歌曲', artist: '' }
 )
-// 状态同步函数
-const syncState = () => {
-  // 更新播放时间（从audio元素获取实时时间）
-  if (player.audio) {
-    currentTime.value = player.audio.currentTime
-    const audioDuration = player.audio.duration;
-    if (!audioDuration || isNaN(audioDuration) || !isFinite(audioDuration)) {
-      // audio返回无效时，使用后端时长（单位需统一，假设是秒）
-      duration.value = currentMusic.value.timelength || 0;
-    } else {
-      duration.value = audioDuration;
-    }
 
+const handleLoadedMetadata = () => {
+  if (player.audio) {
+    const audioDuration = player.audio.duration;
+    if (audioDuration > 0 && !isNaN(audioDuration) && isFinite(audioDuration)) {
+      duration.value = audioDuration;
+    } else {
+      // 从音乐信息中获取时长（假设单位为秒）
+      duration.value = currentMusic.value.timelength || 0;
+    }
   }
 }
 
+// 状态同步函数
+const syncState = () => {
+  if (!player.audio) return;
+
+  const newTime = player.audio.currentTime;
+  if (Math.abs(newTime - currentTime.value) > 0.05) { // 避免无效更新
+    currentTime.value = newTime;
+  }
+
+  const audioDuration = player.audio.duration;
+  if (audioDuration > 0 && !isNaN(audioDuration) && isFinite(audioDuration)) {
+    duration.value = audioDuration;
+  } else if (currentMusic.value.timelength) {
+    duration.value = currentMusic.value.timelength;
+  }
+};
+
+
 // 注册状态更新监听器
 onMounted(() => {
-  // 设置音频元素并初始化事件
   player.setAudioElement(bgMusic.value)
 
   // 注册状态更新监听器
@@ -118,24 +131,6 @@ onMounted(() => {
 
   // 初始同步状态
   syncState()
-
-  // 添加音频事件监听（进度更新）
-  if (player.audio) {
-    player.audio.addEventListener('timeupdate', () => {
-      currentTime.value = player.audio.currentTime
-    })
-
-    player.audio.addEventListener('loadedmetadata', () => {
-      const audioDuration = player.audio.duration;
-
-      if (!audioDuration || isNaN(audioDuration) || !isFinite(audioDuration)) {
-        // audio返回无效时，使用后端时长（单位需统一，假设是秒）
-        duration.value = currentMusic.value.timelength || 0;
-      } else {
-        duration.value = audioDuration;
-      }
-    })
-  }
 
   document.addEventListener('click', onClickOutside)
 })
@@ -181,12 +176,60 @@ const playSong = (index) => {
 
 // 进度条控制
 const seekAudio = (e) => {
-  if (!player.audio || duration.value <= 0) return
+  // 检查音频是否就绪
+  const isAudioReady = player.audio &&
+      player.audio.readyState >= 2 &&
+      duration.value > 0;
 
-  const rect = e.currentTarget.getBoundingClientRect()
-  const pos = (e.clientX - rect.left) / rect.width
-  player.audio.currentTime = pos * duration.value
-}
+  if (!isAudioReady) {
+    console.warn("音频未就绪，无法跳转");
+    return;
+  }
+
+  // 获取事件位置（支持鼠标和触摸事件）
+  let clientX;
+  if (e.type === 'touchstart' || e.type === 'touchmove') {
+    clientX = e.touches[0].clientX;
+  } else {
+    clientX = e.clientX;
+  }
+
+  // 计算跳转位置
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  const targetTime = pos * duration.value;
+
+  console.log(`尝试跳转至 ${targetTime.toFixed(2)}s (${(pos * 100).toFixed(1)}%)`);
+
+  // 使用防抖技术，避免短时间内多次跳转
+  if (seekAudio.lastSeek && Date.now() - seekAudio.lastSeek < 100) {
+    console.log("防抖：忽略频繁跳转请求");
+    return;
+  }
+  seekAudio.lastSeek = Date.now();
+
+  try {
+    // 执行跳转
+    player.audio.currentTime = targetTime;
+
+    // 触发跳转成功事件
+    if (typeof player.onSeekSuccess === 'function') {
+      player.onSeekSuccess(targetTime);
+    }
+
+    console.log(`跳转成功：${targetTime.toFixed(2)}s`);
+  } catch (err) {
+    console.error(`跳转失败 (${targetTime.toFixed(2)}s):`, err);
+
+    // // 触发跳转失败事件
+    // if (typeof player.onSeekError === 'function') {
+    //   player.onSeekError(targetTime, err);
+    // }
+  }
+};
+
+// 初始化防抖时间戳
+seekAudio.lastSeek = 0;
 
 // 音量控制
 const handleVolumeChange = () => {
@@ -208,6 +251,51 @@ const formatTime = (seconds) => {
   seconds = Math.floor(seconds % 60)
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
+
+watch(() => player.current, () => {
+  if (player.current && player.audio) {
+    // 当播放歌曲切换时，重置进度
+    currentTime.value = 0;
+    // 重新加载元数据
+    handleLoadedMetadata();
+  }
+})
+
+// 创建响应式封面URL
+const coverUrl = ref('')
+
+// 监听currentMusic变化，更新封面URL
+watch(() => player.current, () => {
+  if (player.current) {
+    coverUrl.value = player.current.imageUrl || defaultCover
+  } else {
+    coverUrl.value = defaultCover
+  }
+}, { immediate: true })
+
+const handleCoverError = () => {
+  coverUrl.value = defaultCover
+}
+
+const previousVolume = ref(0.5);
+
+const toggleMute = () => {
+  if (!player.audio) return;
+
+  if (!isMuted.value) {
+    // 记录当前音量
+    previousVolume.value = volume.value;
+    volume.value = 0;
+    player.audio.volume = 0;
+  } else {
+    // 恢复音量
+    volume.value = previousVolume.value || 0.5;
+    player.audio.volume = volume.value;
+  }
+
+  isMuted.value = volume.value === 0;
+};
+
 </script>
 
 <style scoped>
@@ -218,6 +306,7 @@ const formatTime = (seconds) => {
   --primary-color: #1db954; /* Spotify绿风格 */
   --hover-color: #222;
   --highlight-color: #2a2a2a;
+  --volume-percent: 0%;
 }
 
 #MusicControl {
@@ -246,18 +335,6 @@ const formatTime = (seconds) => {
   gap: 20px;
 }
 
-.title {
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: var(--text-color);
-}
-
-.artist {
-  font-size: 0.85rem;
-  color: var(--secondary-color);
-  margin-top: 2px;
-}
-
 .progress-area {
   flex: 1;
   max-width: 1000px;
@@ -274,7 +351,7 @@ const formatTime = (seconds) => {
 
 .progress-bar {
   height: 100%;
-  background: var(--primary-color);
+  background: skyblue;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -335,17 +412,63 @@ button:hover {
   left: 50%;
   transform: translateX(-50%);
   background: #222;
-  padding: 6px;
+  padding: 10px; /* 增加内边距 */
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1001; /* 确保覆盖层级 */
 }
 
 .vertical-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
   height: 90px;
-  width: 4px;
-  background: var(--primary-color);
-  -webkit-appearance: slider-vertical;
-  border-radius: 3px;
+  width: 10px; /* 增加宽度提高可见性 */
+  -webkit-appearance: none;
+  appearance: none;
+  background: #444; /* 默认轨道背景色 */
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* 使用伪元素创建可视线性轨道 */
+.vertical-slider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--volume-percent, 0%);
+  width: 100%;
+  background: #00ffff;
+  border-radius: 4px 4px 0 0;
+  pointer-events: none; /* 避免干扰滑块操作 */
+}
+
+
+/* Chrome / Safari / Edge */
+.vertical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 16px; /* 增大滑块 */
+  width: 16px;
+  background: white;
+  border: 1px solid var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative; /* 确保z-index生效 */
+  z-index: 2; /* 位于轨道上方 */
+}
+
+/* Firefox */
+.vertical-slider::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  background: white;
+  border: 1px solid var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
 }
 
 .playlist {
@@ -431,19 +554,41 @@ button:hover {
   transform: translateY(10px);
 }
 
+/* 新增的垂直布局样式 */
+.song-info-vertical {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 150px; /* 确保足够空间展示完整信息 */
+}
+
+.song-title-vertical {
+  font-size: 1.3rem; /* 增大歌名字体 */
+  font-weight: 600; /* 加粗歌名 */
+  line-height: 1.3;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px; /* 限制宽度避免溢出 */
+}
+
+.song-artist-vertical {
+  font-size: 0.95rem; /* 歌手字体略小 */
+  color: var(--secondary-color);
+  line-height: 1.4;
+  margin-top: 4px; /* 与歌名保持间距 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 调整整体布局 */
 .info-and-cover {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.song-info {
-  width: 300px; /* 固定宽度，可以根据实际需求调整 */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: bold;
-  color: var(--text-color);
+  min-width: 280px; /* 确保有足够空间展示信息 */
 }
 
 .song-title, .song-artist {
@@ -452,20 +597,6 @@ button:hover {
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.separator {
-  margin: 0 5px;
-  color: #aaa;
-}
-
-.title-line {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-color);
-  overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
