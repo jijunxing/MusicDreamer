@@ -44,7 +44,8 @@ public class SecurityConfig {
     //基于token，不需要csrf
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // 启用CORS并禁用CSRF
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        http
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests((authz) -> authz
@@ -81,22 +82,22 @@ public class SecurityConfig {
     }
 
 
-    // 配置CORS
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        // 使用安全域名列表替代通配符*
-        config.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Content-Disposition"));
-        config.setAllowCredentials(true);  // 启用凭证携带
-        config.setMaxAge(3600L);
-        // 暴露更多响应头（文件下载必需）
-        config.setExposedHeaders(Arrays.asList("Content-Disposition", "Authorization", "Content-Length"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+//    // 配置CORS
+//    @Bean
+//    CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration config = new CorsConfiguration();
+//        // 使用安全域名列表替代通配符*
+//        config.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+//        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Content-Disposition"));
+//        config.setAllowCredentials(true);  // 启用凭证携带
+//        config.setMaxAge(3600L);
+//        // 暴露更多响应头（文件下载必需）
+//        config.setExposedHeaders(Arrays.asList("Content-Disposition", "Authorization", "Content-Length"));
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", config);
+//        return source;
+//    }
 
 }

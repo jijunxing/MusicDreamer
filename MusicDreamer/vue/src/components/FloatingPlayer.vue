@@ -4,7 +4,7 @@
       <div class="player-content">
         <!-- 歌曲信息 -->
         <!-- 歌曲信息 + 封面 -->
-        <div class="info-and-cover">
+        <div class="info-and-cover" @click="goToLyricsPage">
           <div class="song-info-vertical">
             <div class="song-title-vertical">{{ currentMusic.musicName || '歌名'}}</div>
             <div class="song-artist-vertical">{{ currentMusic.singerName || '歌手' }}</div>
@@ -27,6 +27,9 @@
 
         <!-- 播放控制按钮 -->
         <div class="main-controls">
+          <button class="mode-btn" @click="togglePlayMode" :title="playModeTitle">
+            <Icon :icon="playModeIcon" />
+          </button>
           <button class="playlist-btn" @click="togglePlaylist" title="播放列表">
             <Icon icon="mdi:playlist-music" />
           </button>
@@ -39,7 +42,9 @@
           <button class="next-btn" @click="handleNext" title="下一首">
             <Icon icon="mdi:skip-next" />
           </button>
-
+          <button class="favorite-btn" @click="toggleFavorite" :title="isFavorite ? '取消喜欢' : '喜欢'">
+            <Icon :icon="isFavorite ? 'mdi:heart' : 'mdi:heart-outline'" :color="isFavorite ? '#ff4081' : ''" />
+          </button>
           <!-- 音量控制 -->
           <div class="volume-control" @mouseenter="showVolume = true" @mouseleave="showVolume = false">
             <button class="volume-btn" :title="isMuted ? '取消静音' : '静音'" @click="toggleMute">
@@ -62,21 +67,25 @@
                :class="{ 'playing': currentIndex === index }" @click="playSong(index)">
             <div class="song-number">{{ index + 1 }}</div>
             <div class="song-details">
-              <div class="song-title">{{ song.musicName }}</div>
-              <div class="song-artist">{{ song.singerName || '未知艺术家' }}</div>
+              <div class="song-title-list">{{ song.musicName }}</div>
+              <div class="song-artist-list">{{ song.singerName || '未知艺术家' }}</div>
             </div>
             <div class="song-duration">{{ Math.floor(song.timelength/60)}}:{{song.timelength%60}}</div>
+            <div class="delete-btn" @click.stop="removeSong(index)" title="删除">
+              <Icon icon="mdi:delete" />
+            </div>
           </div>
         </div>
       </transition>
     </div>
 
-    <audio ref="bgMusic" @ended="handleNext" crossorigin="anonymous" />
+    <audio ref="bgMusic" crossorigin="anonymous" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { player } from "@/utils/player"
 import { Icon } from '@iconify/vue'
 import defaultCover from "@/assets/imgs/default_cover.svg";
@@ -296,6 +305,62 @@ const toggleMute = () => {
   isMuted.value = volume.value === 0;
 };
 
+// 播放模式切换
+const togglePlayMode = () => player.togglePlayMode();
+
+// 播放模式图标和标题
+const playModeIcon = computed(() => {
+  switch (player.playMode) {
+    case 'loop': return 'mdi:repeat-once'
+    case 'list-loop': return 'mdi:repeat'
+    case 'random': return 'mdi:shuffle'
+    case 'order':
+    default:
+      return 'mdi:playlist-play'
+  }
+})
+
+const playModeTitle = computed(() => {
+  switch (player.playMode) {
+    case 'loop': return '单曲循环'
+    case 'list-loop': return '列表循环'
+    case 'random': return '随机播放'
+    case 'order':
+    default:
+      return '顺序播放'
+  }
+})
+
+// 爱心按钮功能（暂时只实现UI）
+const isFavorite = ref(false)
+const toggleFavorite = () => {
+  isFavorite.value = !isFavorite.value
+  // 后续可在此处添加喜欢功能的实现
+}
+
+const removeSong = (index) => {
+  // 如果删除的是当前正在播放的歌曲
+  if (currentIndex.value === index) {
+    // 停止播放
+    player.audio.pause();
+    player.isPlaying = false;
+    player.current = null;
+  }
+
+  // 从播放列表中删除该歌曲
+  player.queue.splice(index, 1);
+  player.next()
+};
+
+const router = useRouter()
+// 跳转到歌词页
+const goToLyricsPage = () => {
+  if (!player.current) return
+  router.push({
+    name: 'LyricsPage',
+    query: { id: player.current.musicId } // 传递歌曲ID以便歌词页加载数据
+  })
+}
 </script>
 
 <style scoped>
@@ -521,14 +586,14 @@ button:hover {
   overflow: hidden;
 }
 
-.song-title {
+.song-title-list {
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.song-artist {
+.song-artist-list {
   font-size: 0.75rem;
   color: var(--secondary-color);
 }
@@ -589,6 +654,11 @@ button:hover {
   align-items: center;
   gap: 16px;
   min-width: 280px; /* 确保有足够空间展示信息 */
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.info-and-cover:hover {
+  transform: scale(1.02);
 }
 
 .song-title, .song-artist {
@@ -599,7 +669,10 @@ button:hover {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+.song-title:hover,
+.song-artist:hover {
+  color: #4fc3f7;
+}
 /* 封面图样式 */
 .cover-wrapper {
   width: 48px;
@@ -615,6 +688,11 @@ button:hover {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s;
+}
+.cover:hover {
+  box-shadow: 0 4px 12px rgba(79, 195, 247, 0.4);
 }
 
 /* 旋转动画 */
@@ -629,5 +707,30 @@ button:hover {
 
 .rotating {
   animation: spin 10s linear infinite;
+}
+
+.mode-btn, .favorite-btn {
+  font-size: 1.2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color);
+  transition: transform 0.15s ease, color 0.3s ease;
+}
+
+.mode-btn:hover, .favorite-btn:hover {
+  transform: scale(1.1);
+  color: var(--primary-color);
+}
+
+.favorite-btn .iconify[data-icon="mdi:heart"] {
+  color: #ff4081; /* 爱心填充时的颜色 */
+}
+
+/* 调整控制按钮间距 */
+.main-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px; /* 稍微增加间距 */
 }
 </style>

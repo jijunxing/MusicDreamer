@@ -1,4 +1,5 @@
 import { reactive } from 'vue'
+import {ElMessage} from "element-plus";
 
 export const player = reactive({
     queue: [],
@@ -6,13 +7,18 @@ export const player = reactive({
     isPlaying: false,
     audio: null, // 改为初始化为 null
     listeners: new Set(), // 状态监听器集合
-
+    playMode: 'order',
     // 新增方法：设置音频元素并初始化事件监听
     setAudioElement(audioElement) {
         this.audio = audioElement;
         this.initAudioEvents(); // 初始化音频事件监听
     },
-
+    togglePlayMode() {
+        const modes = ['order', 'list-loop', 'loop', 'random'];
+        const currentIndex = modes.indexOf(this.playMode);
+        this.playMode = modes[(currentIndex + 1) % modes.length];
+        console.log(`播放模式切换为: ${this.playMode}`);
+    },
     // 新增方法：初始化音频事件监听
     initAudioEvents() {
         if (!this.audio) return;
@@ -28,7 +34,13 @@ export const player = reactive({
         });
 
         this.audio.addEventListener('ended', () => {
-            this.next();
+            // 单曲循环模式特殊处理
+            if (this.playMode === 'loop') {
+                this.audio.currentTime = 0;
+                this.audio.play().catch(err => console.warn('循环播放失败', err));
+            } else {
+                this.next();
+            }
         });
 
         this.audio.addEventListener('timeupdate', () => {
@@ -43,7 +55,10 @@ export const player = reactive({
 
     async play(song) {
         if (!this.audio) return;
-
+        if (song.activation === 0){
+            ElMessage.warning("该歌曲已被冻结")
+            return
+        }
         this.current = song;
 
         // 移除之前绑定的canplay事件，避免重复触发
@@ -92,25 +107,101 @@ export const player = reactive({
 
     // 其他方法保持不变...
     addToQueue(song) {
-        const exists = this.queue.find(m => m.musicId === song.musicId);
-        if (!exists) {
-            this.queue.push(song);
-            this.notify(); // 添加队列变更通知
+        if(song.activation === 0){
+            ElMessage.warning("该音乐已被冻结")
+            return
         }
-    },
-
-    next() {
-        const currentIndex = this.queue.findIndex(m => m.musicId === this.current?.musicId)
-        if (currentIndex !== -1 && currentIndex < this.queue.length - 1) {
-            this.play(this.queue[currentIndex + 1])
+        if (this.queue.find(m => m.musicId === song.musicId)) {
+            return
         }
+        this.queue.push(song)
         this.notify()
     },
 
+    next() {
+        if (this.queue.length === 0) return;
+
+        const currentIndex = this.queue.findIndex(m => m.musicId === this.current?.musicId);
+        let nextIndex = -1;
+        console.log("当前模式:", this.playMode, "当前索引:", currentIndex, "队列长度:", this.queue.length); // 调试日志
+        switch (this.playMode) {
+            case 'order': // 顺序播放
+                if (currentIndex < this.queue.length - 1) {
+                    nextIndex = currentIndex + 1;
+                } else {
+                    // 最后一首停止播放
+                    this.audio.currentTime = 0;
+                    this.audio.pause();
+                    this.isPlaying = false;
+                }
+                break;
+
+            case 'list-loop': // 列表循环
+                nextIndex = (currentIndex + 1) % this.queue.length;
+                console.log("列表循环下一首索引:", nextIndex); // 调试日志
+                break;
+
+            case 'loop': // 单曲循环
+                // 重新播放当前歌曲
+                this.audio.currentTime = 0;
+                this.audio.play().catch(err => console.warn('播放失败', err));
+                return;
+
+            case 'random': // 随机播放
+                if (this.queue.length > 1) {
+                    let randomIndex;
+                    do {
+                        randomIndex = Math.floor(Math.random() * this.queue.length);
+                        console.log("随机索引"+randomIndex)
+                        console.log("当前索引"+currentIndex)
+                    } while (randomIndex === currentIndex);
+                    nextIndex = randomIndex;
+                } else {
+                    nextIndex = 0;
+                }
+                break;
+        }
+
+        if (nextIndex >= 0 && nextIndex < this.queue.length) {
+            this.play(this.queue[nextIndex]);
+        }
+    },
+
     prev() {
-        const currentIndex = this.queue.findIndex(m => m.musicId === this.current?.musicId)
-        if (currentIndex > 0) {
-            this.play(this.queue[currentIndex - 1])
+        if (this.queue.length === 0) return;
+
+        const currentIndex = this.queue.findIndex(m => m.musicId === this.current?.musicId);
+        let prevIndex = -1;
+
+        switch (this.playMode) {
+            case 'order': // 顺序播放
+
+
+            case 'list-loop': // 列表循环
+                prevIndex = (currentIndex - 1 + this.queue.length) % this.queue.length;
+                break;
+
+            case 'loop': // 单曲循环
+                // 重新播放当前歌曲
+                this.audio.currentTime = 0;
+                this.audio.play().catch(err => console.warn('播放失败', err));
+                return;
+
+            case 'random': // 随机播放
+                if (this.queue.length > 1) {
+                    let randomIndex;
+                    do {
+                        randomIndex = Math.floor(Math.random() * this.queue.length);
+                    } while (randomIndex === currentIndex);
+                    prevIndex = randomIndex;
+                } else {
+                    prevIndex = 0;
+                }
+                break;
+        }
+
+        if (prevIndex >= 0 && prevIndex < this.queue.length) {
+            this.play(this.queue[prevIndex]);
         }
     },
 
@@ -126,4 +217,8 @@ export const player = reactive({
             });
         }
     },
+
+    clear(){
+        this.queue = []
+    }
 })

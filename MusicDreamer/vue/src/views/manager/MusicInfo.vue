@@ -137,6 +137,7 @@ const playNow = (row) => {
 
 const addToQueue = (row) => {
   player.addToQueue(row)
+  ElMessage.success("成功加入播放列表")
 }
 
 const data = reactive({

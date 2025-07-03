@@ -25,10 +25,10 @@ public class CorsConfig {
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true); // 允许携带凭证（如cookies）
 
-        // 针对音频资源的特殊设置
-        config.addExposedHeader("Content-Disposition"); // 暴露内容处置头
-        config.addExposedHeader("Content-Length");
-        config.addExposedHeader("Content-Type");
+//        // 针对音频资源的特殊设置
+//        config.addExposedHeader("Content-Disposition"); // 暴露内容处置头
+//        config.addExposedHeader("Content-Length");
+//        config.addExposedHeader("Content-Type");
 
         // 设置预检查请求的有效期（秒）
         config.setMaxAge(3600L);
