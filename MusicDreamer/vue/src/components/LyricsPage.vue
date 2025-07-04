@@ -125,17 +125,10 @@ const measureLineHeight = () => {
   nextTick(() => {
     const lines = lyricsContainer.value?.querySelectorAll('.lyric-line');
     if (lines && lines.length > 0) {
-      const firstLine = lines[0];
-      // 添加最小高度保护
-      lineHeight.value = Math.max(firstLine.offsetHeight, 60);
+      // 不再需要固定行高，使用实际DOM测量
+      lineHeight.value = lines[0].offsetHeight;
     } else {
-      // 默认行高与CSS的min-height保持一致
       lineHeight.value = 60;
-    }
-
-    // 立即应用当前歌词位置
-    if(currentLyricIndex.value >= 0) {
-      scrollToLyric(currentLyricIndex.value)
     }
   });
 };
@@ -146,20 +139,25 @@ function scrollToLyric(index) {
 
   const container = lyricsContainer.value;
   const containerHeight = container.clientHeight;
-  const currentLineHeight = lineHeight.value;
+  const lyricLines = container.querySelectorAll('.lyric-line');
+
+  if (index >= lyricLines.length) return;
+
+  // 获取当前歌词行的位置信息
+  const currentLine = lyricLines[index];
+  const currentLineHeight = currentLine.offsetHeight;
+  const currentLineTop = currentLine.offsetTop;
 
   // ✅ 精准居中公式（修复坐标系问题）
-  const targetOffset = index * currentLineHeight - containerHeight/2 + currentLineHeight/2;
+  const targetOffset = currentLineTop - (containerHeight / 2) + (currentLineHeight / 2);
 
   // ✅ 动态边界保护（支持短歌词）
-  const maxScroll = Math.max(
-      0,
-      parsedLyrics.value.length * currentLineHeight - containerHeight
-  );
+  const maxScroll = container.scrollHeight - containerHeight;
+  const finalOffset = Math.max(0, Math.min(maxScroll, targetOffset));
 
   // ✅ 应用平滑滚动
   container.scrollTo({
-    top: Math.max(0, Math.min(maxScroll, targetOffset)),
+    top: finalOffset,
     behavior: 'smooth'
   });
 }
@@ -381,19 +379,23 @@ watch(parsedLyrics, (newVal) => {
 /* 右侧歌词区域 */
 .lyrics-section {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto; /* 改为可滚动容器 */
   padding: 40px 60px;
   position: relative;
+  scroll-behavior: smooth; /* 添加平滑滚动效果 */
+  /* 隐藏滚动条 */
+  scrollbar-width: none; /* Firefox */
+}
+.lyrics-section::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .lyrics-display {
   position: relative;
   left: 0;
   width: 100%;
-  transform: translateY(-50%);
-  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   padding: 20px 0;
-  will-change: transform;
+  transition: none; /* 移除transform过渡 */
 }
 
 .lyric-line {
