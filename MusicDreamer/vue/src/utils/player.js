@@ -8,6 +8,8 @@ export const player = reactive({
     audio: null, // 改为初始化为 null
     listeners: new Set(), // 状态监听器集合
     playMode: 'order',
+    currentTime: 0, // 新增全局播放时间
+    duration: 0,    // 新增全局总时长
     // 新增方法：设置音频元素并初始化事件监听
     setAudioElement(audioElement) {
         this.audio = audioElement;
@@ -44,8 +46,13 @@ export const player = reactive({
         });
 
         this.audio.addEventListener('timeupdate', () => {
-            this.notify();
-        });
+            this.currentTime = this.audio.currentTime
+            this.notify() // 触发所有监听器更新
+        })
+
+        this.audio.addEventListener('durationchange', () => {
+            this.duration = this.audio.duration
+        })
     },
 
     // 新增方法：通知所有监听器
