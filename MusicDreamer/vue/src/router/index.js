@@ -31,12 +31,7 @@ const router = createRouter({
         { path: 'personal', name: 'PersonalInfo', component: () => import('@/views/user/personalInfo.vue')},
       ]
     },
-    {
-      path: '/lyrics',
-      name: 'LyricsPage',
-      component: () => import('@/views/LyricsPage.vue'),
-      props: route => ({ songId: route.query.id })
-    }
+    { path: '/lyrics', name: 'LyricsPage', component: () => import('@/views/LyricsPage.vue'),}
   ]
 })
 

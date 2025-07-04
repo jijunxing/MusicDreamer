@@ -1,5 +1,6 @@
 import { reactive } from 'vue'
 import {ElMessage} from "element-plus";
+import request from "@/utils/request";
 
 export const player = reactive({
     queue: [],
@@ -107,9 +108,17 @@ export const player = reactive({
         if (!exists) {
             this.queue.push(song);
         }
-
         this.notify();
-        request.put('music/update')
+        song.listenNumb = song.listenNumb+1
+        request.request({
+            method: 'PUT',
+            url: '/music/update',
+            data: song
+        }).then(res => {
+            if (res.code !== '200') {
+                ElMessage.error(res.msg)
+            }
+        })
     },
 
 

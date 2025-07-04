@@ -83,15 +83,14 @@ public class MusicService {
         return PageInfo.of(list);
     }
 
-    public void bindTags(Integer musicId, List<Integer> tagIds) {
-        // 删除旧绑定
-        musicMapper.deleteTagsByMusicId(musicId);
-        // 添加新绑定
-        for (Integer tagId : tagIds) {
-            musicMapper.insertMusicTag(musicId, tagId);
+    public void addWithTags(Music music) {
+        Integer musicId = musicMapper.insert(music);
+        if (music.getTags() != null) {
+            List<Integer> tagIds = music.getTags().stream().map(Tag::getId).toList();
+            musicMapper.insertMusicTags(music.getMusicId(), tagIds);
         }
+        musicMapper.updateById(music);
     }
-
     public void freezeById(Integer id) {
         musicMapper.freezeById(id);
     }
@@ -209,4 +208,5 @@ public class MusicService {
 
         return encodedPath.toString();
     }
-} 
+
+}

@@ -123,7 +123,7 @@ const data = reactive({
   tableData: [],
   total: 0,
   pageNum: 1,
-  pageSize: 5,
+  pageSize: 6,
   formVisible: false,
   form: {},
   username: '',

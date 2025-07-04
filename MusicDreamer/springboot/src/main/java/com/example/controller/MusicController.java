@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.entity.Tag;
 import com.example.util.Result;
 import com.example.entity.Music;
 import com.example.service.MusicService;
@@ -59,11 +60,8 @@ public class MusicController {
 
     @PostMapping("/addWithTags")
     public Result addWithTags(@RequestBody Music music) {
-        Integer musicId = musicService.add(music);
-        if (music.getTagIds() != null && !music.getTagIds().isEmpty()) {
-            musicService.bindTags(musicId, music.getTagIds());
-        }
-        return Result.success(musicId); // 返回 musicId 可选
+        musicService.addWithTags(music);
+        return Result.success();
     }
 
     @PutMapping("/freeze/{id}")

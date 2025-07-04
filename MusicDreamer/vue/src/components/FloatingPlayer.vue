@@ -338,18 +338,17 @@ const toggleFavorite = () => {
   // 后续可在此处添加喜欢功能的实现
 }
 
-const removeSong = (index) => {
+const removeSong = async (index) => {
   // 如果删除的是当前正在播放的歌曲
   if (currentIndex.value === index) {
     // 停止播放
     player.audio.pause();
     player.isPlaying = false;
     player.current = null;
-    player.next()
   }
-
   // 从播放列表中删除该歌曲
   player.queue.splice(index, 1);
+  await player.next()
 };
 
 const router = useRouter()
@@ -358,7 +357,6 @@ const goToLyricsPage = () => {
   if (!player.current) return
   router.push({
     name: 'LyricsPage',
-    query: { id: player.current.musicId } // 传递歌曲ID以便歌词页加载数据
   })
 }
 </script>
@@ -381,7 +379,7 @@ const goToLyricsPage = () => {
   width: 100%;
   background: var(--bg-color);
   box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 1001;
   color: var(--text-color);
   font-family: "Segoe UI", sans-serif;
 }
@@ -706,7 +704,7 @@ button:hover {
 }
 
 .rotating {
-  animation: spin 10s linear infinite;
+  animation: spin 16s linear infinite;
 }
 
 .mode-btn, .favorite-btn {
