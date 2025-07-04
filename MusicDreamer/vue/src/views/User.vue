@@ -40,7 +40,7 @@
             <span>首页</span>
           </el-menu-item>
           <el-menu-item index="/user/song">
-            <el-icon><HomeFilled /></el-icon>
+            <el-icon><Headset /></el-icon>
             <span>歌曲</span>
           </el-menu-item>
           <el-menu-item index="/login" @click="logout">

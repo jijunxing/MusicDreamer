@@ -16,7 +16,7 @@ const router = createRouter({
         { path: 'user', name: 'UserInfo', component: () => import('@/views/manager/UserInfo.vue')},
         { path: 'singer', name: 'SingerInfo', component: () => import('@/views/manager/SingerInfo.vue')},
         { path: 'admin', name: 'AdminInfo', component: () => import('@/views/manager/AdminInfo.vue')},
-        { path: 'music', name: 'MusicInfo', component: () => import('@/views/manager/MusicInfo.vue')},
+        { path: 'music', name: 'MusicInfo', component: () => import('@/views/manager/MusicInfo.vue'),},
         { path: 'logs', name: 'LogInfo', component: () => import('@/views/manager/LogInfo.vue')},
         { path: 'notice', name: 'NoticeInfo', component: () => import('@/views/manager/NoticeInfo.vue')},
         { path: 'songlist', name: 'SongListInfo', component: () => import('@/views/manager/SongListInfo.vue')},
@@ -31,6 +31,7 @@ const router = createRouter({
         { path: 'personal', name: 'PersonalInfo', component: () => import('@/views/user/personalInfo.vue')},
       ]
     },
+    { path: '/lyrics', name: 'LyricsPage', component: () => import('@/views/LyricsPage.vue'),}
   ]
 })
 

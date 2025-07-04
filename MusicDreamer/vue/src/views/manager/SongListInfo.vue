@@ -327,6 +327,7 @@ const playSonglist = (row) => {
   player.clear()
   row.musics?.forEach(music => player.addToQueue(music))
   ElMessage.success('歌单已加入播放队列')
+  player.play(row.musics[0])
 }
 </script>
 

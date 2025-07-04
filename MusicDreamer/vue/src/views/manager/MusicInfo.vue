@@ -85,7 +85,7 @@
               <UploadFile v-model="data.form.musicUrl" type="music" />
             </el-form-item>
             <el-form-item label="歌词(.lrc)">
-              <UploadFile v-model="data.form.lyricUrl" type="lrc" />
+              <UploadFile v-model="data.form.lyricsUrl" type="lrc" />
             </el-form-item>
           </div>
 
@@ -137,13 +137,14 @@ const playNow = (row) => {
 
 const addToQueue = (row) => {
   player.addToQueue(row)
+  ElMessage.success("成功加入播放列表")
 }
 
 const data = reactive({
   tableData: [],
   total: 0,
   pageNum: 1,
-  pageSize: 5,
+  pageSize: 6,
   formVisible: false,
   form: {},
   keyword: '',

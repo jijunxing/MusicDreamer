@@ -123,7 +123,7 @@ const data = reactive({
   tableData: [],
   total: 0,
   pageNum: 1,
-  pageSize: 5,
+  pageSize: 6,
   formVisible: false,
   form: {},
   username: '',
@@ -167,6 +167,7 @@ const handleEdit = (row) => {
 }
 
 const save = () => {
+  data.form.role = 'SINGER'
   request.request({
     method: data.form.id ? 'PUT' : 'POST',
     url: data.form.id ? '/user/update' : '/user/add',

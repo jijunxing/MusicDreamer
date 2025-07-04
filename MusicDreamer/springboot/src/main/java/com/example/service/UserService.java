@@ -78,7 +78,6 @@ public class UserService {
         if(ObjectUtil.isEmpty(user.getPassword())) {
             user.setPassword(passwordEncoder.encode(user.getUsername())); //默认密码为用户名
         }
-        user.setRole("USER");
         userMapper.insert(user);
     }
 
