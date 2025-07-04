@@ -5,8 +5,8 @@
 <mapper namespace="com.example.mapper.MusicMapper">
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="musicId">
-        insert into music (music_name, music_url, image_url, from_singer, lyric_url, timelength, activation, create_time, listen_numb)
-        values(#{musicName}, #{musicUrl}, #{imageUrl}, #{fromSinger}, #{lyricUrl}, #{timelength}, #{activation}, #{createTime}, #{listenNumb})
+        insert into music (music_name, music_url, image_url, from_singer, lyrics_url, timelength, activation, create_time, listen_numb)
+        values(#{musicName}, #{musicUrl}, #{imageUrl}, #{fromSinger}, #{lyricsUrl}, #{timelength}, #{activation}, #{createTime}, #{listenNumb})
     </insert>
 
     <delete id="deleteById">
@@ -20,7 +20,7 @@
             <if test="musicUrl != null">music_url = #{musicUrl},</if>
             <if test="imageUrl != null">image_url = #{imageUrl},</if>
             <if test="fromSinger != null">from_singer = #{fromSinger},</if>
-            <if test="lyricUrl != null">lyric_url = #{lyricUrl},</if>
+            <if test="lyricsUrl!= null">lyrics_url = #{lyricsUrl},</if>
             <if test="timelength != null">timelength = #{timelength},</if>
             <if test="activation != null">activation = #{activation},</if>
             <if test="createTime != null">create_time = #{createTime},</if>

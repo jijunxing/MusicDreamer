@@ -45,6 +45,7 @@
       </div>
 
     </div>
+
   </div>
 </template>
 
@@ -67,7 +68,7 @@ const currentSong = computed(() => player.current || {
   musicName: '未知歌曲',
   singerName: '未知歌手',
   imageUrl: defaultCover,
-  lyricUrl: ''
+  lyrics: ''
 })
 
 const isPlaying = computed(() => player.isPlaying)
@@ -117,7 +118,7 @@ const parseLyric = (lrcText) => {
 
 // 解析歌词数据 - 直接使用lyricUrl内容
 const parsedLyrics = computed(() => {
-  return parseLyric(currentSong.value.lyricUrl);
+  return parseLyric(currentSong.value.lyrics);
 });
 
 // 同步测量行高
@@ -148,14 +149,14 @@ function scrollToLyric(index) {
   const currentLineHeight = currentLine.offsetHeight;
   const currentLineTop = currentLine.offsetTop;
 
-  // ✅ 精准居中公式（修复坐标系问题）
+  // 准居中公式
   const targetOffset = currentLineTop - (containerHeight / 2) + (currentLineHeight / 2);
 
-  // ✅ 动态边界保护（支持短歌词）
+  // 动态边界保护
   const maxScroll = container.scrollHeight - containerHeight;
   const finalOffset = Math.max(0, Math.min(maxScroll, targetOffset));
 
-  // ✅ 应用平滑滚动
+  // 应用平滑滚动
   container.scrollTo({
     top: finalOffset,
     behavior: 'smooth'
@@ -383,6 +384,7 @@ watch(parsedLyrics, (newVal) => {
   padding: 40px 60px;
   position: relative;
   scroll-behavior: smooth; /* 添加平滑滚动效果 */
+  bottom: 10%;
   /* 隐藏滚动条 */
   scrollbar-width: none; /* Firefox */
 }

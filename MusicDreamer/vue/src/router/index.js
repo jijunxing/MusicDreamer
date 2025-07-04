@@ -34,7 +34,7 @@ const router = createRouter({
     {
       path: '/lyrics',
       name: 'LyricsPage',
-      component: () => import('@/components/LyricsPage.vue'),
+      component: () => import('@/views/LyricsPage.vue'),
       props: route => ({ songId: route.query.id })
     }
   ]

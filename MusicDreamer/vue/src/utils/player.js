@@ -109,6 +109,7 @@ export const player = reactive({
         }
 
         this.notify();
+        request.put('music/update')
     },
 
 

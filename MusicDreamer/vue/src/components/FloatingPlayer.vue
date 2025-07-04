@@ -345,11 +345,11 @@ const removeSong = (index) => {
     player.audio.pause();
     player.isPlaying = false;
     player.current = null;
+    player.next()
   }
 
   // 从播放列表中删除该歌曲
   player.queue.splice(index, 1);
-  player.next()
 };
 
 const router = useRouter()

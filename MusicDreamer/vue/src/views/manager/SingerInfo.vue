@@ -167,6 +167,7 @@ const handleEdit = (row) => {
 }
 
 const save = () => {
+  data.form.role = 'SINGER'
   request.request({
     method: data.form.id ? 'PUT' : 'POST',
     url: data.form.id ? '/user/update' : '/user/add',

@@ -20,11 +20,9 @@ import org.jaudiotagger.tag.TagException;
 import org.springframework.stereotype.Service;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
@@ -65,15 +63,16 @@ public class MusicService {
 
     public Music selectById(Integer id) {
         Music music = musicMapper.selectById(id);
-        List<Tag> tags = tagMapper.selectByMusicId(id);
-        music.setTags(tags);
+        if (music != null) {
+            enrichMusicData(music); // 统一数据增强
+        }
         return music;
     }
 
     public List<Music> selectAll(String musicName, String singerName) {
         List<Music> list = musicMapper.selectAll(musicName, singerName);
         for (Music music : list) {
-            music.setTags(tagMapper.selectByMusicId(music.getMusicId()));
+            enrichMusicData(music);
         }
         return list;
     }
@@ -125,5 +124,89 @@ public class MusicService {
             System.err.println("错误: 获取音频时长失败 - " + e.getMessage());
             return 0;
         }
+    }
+
+    private void enrichMusicData(Music music) {
+        // 添加标签数据
+        List<Tag> tags = tagMapper.selectByMusicId(music.getMusicId());
+        music.setTags(tags);
+
+        // 添加歌词数据（非数据库字段）
+        if (music.getLyricsUrl() != null) {
+            System.out.println(downloadAndParseLrc(music.getLyricsUrl()));
+            music.setLyrics(downloadAndParseLrc(music.getLyricsUrl()));
+        }
+    }
+
+    private String downloadAndParseLrc(String lrcUrl) {
+        if (lrcUrl == null || lrcUrl.isEmpty()) return null;
+
+        try {
+            // 解析并编码URL中的路径部分
+            URL originalUrl = new URL(lrcUrl);
+            String encodedPath = encodeUrlPath(originalUrl.getPath());
+
+            // 重建包含编码路径的URL
+            URL encodedUrl = new URL(
+                    originalUrl.getProtocol(),
+                    originalUrl.getHost(),
+                    originalUrl.getPort(),
+                    encodedPath + (originalUrl.getQuery() != null ? "?" + originalUrl.getQuery() : "")
+            );
+            System.out.println("访问："+encodedUrl);
+            HttpURLConnection connection = (HttpURLConnection) encodedUrl.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(10000);
+
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                StringBuilder content = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        content.append(line).append("\n");
+                    }
+                }
+                return content.toString();
+            }
+        } catch (Exception e) {
+            System.err.println("歌词下载失败: " + lrcUrl + " | 错误: " + e.getMessage());
+        }
+        return null;
+    }
+
+    // 辅助方法：对URL路径部分进行编码
+    private String encodeUrlPath(String path) throws UnsupportedEncodingException {
+        if (path == null || path.isEmpty()) return "";
+
+        boolean isAbsolutePath = path.startsWith("/");
+        String[] segments = path.split("/", -1); // 使用-1参数保留尾部空字符串
+        StringBuilder encodedPath = new StringBuilder();
+
+        for (int i = 0; i < segments.length; i++) {
+            String segment = segments[i];
+
+            // 跳过第一个空字符串（如果是绝对路径）
+            if (i == 0 && isAbsolutePath && segment.isEmpty()) {
+                encodedPath.append("/");
+                continue;
+            }
+
+            if (!segment.isEmpty()) {
+                if (encodedPath.length() > 0 && encodedPath.charAt(encodedPath.length() - 1) != '/') {
+                    encodedPath.append("/");
+                }
+                encodedPath.append(URLEncoder.encode(segment, StandardCharsets.UTF_8)
+                        .replace("+", "%20")
+                        .replace("%2F", "/"));
+            } else if (i > 0) {
+                // 处理连续斜杠的情况
+                encodedPath.append("/");
+            }
+        }
+
+        return encodedPath.toString();
     }
 } 
