@@ -20,22 +20,20 @@
         WHERE id = #{id}
     </update>
     <select id="selectById" resultType="com.example.entity.SongList">
-        SELECT * FROM song_list WHERE id = #{id}
+        SELECT song_list.*, user.username FROM song_list left join on song_list.user = user.id WHERE song_list.id = #{id}
     </select>
     <select id="selectAll" resultType="com.example.entity.SongList">
-        SELECT sl.*, COUNT(lm.music_id) AS musicCount
-        FROM song_list sl LEFT JOIN list_music lm
-        ON sl.id = lm.list_id
+        SELECT sl.*, u.username, COUNT(lm.music_id) AS musicCount
+        FROM song_list sl
+        LEFT JOIN user u ON sl.user = u.id
+        LEFT JOIN list_music lm ON sl.id = lm.list_id
         <where>
             <if test="name != null and name != ''">
-                AND name LIKE CONCAT('%', #{name}, '%')
-            </if>
-            <if test="user != null">
-                AND user = #{user}
+                AND sl.name LIKE CONCAT('%', #{name}, '%')
             </if>
         </where>
-        GROUP BY sl.id
-        ORDER BY create_time DESC
+        GROUP BY sl.id, u.username
+        ORDER BY sl.id ASC
     </select>
     <insert id="addMusicToList">
         INSERT INTO list_music (list_id, music_id) VALUES (#{listId}, #{musicId})

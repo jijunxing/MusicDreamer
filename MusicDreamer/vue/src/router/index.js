@@ -17,7 +17,7 @@ const router = createRouter({
         { path: 'singer', name: 'SingerInfo', component: () => import('@/views/manager/SingerInfo.vue')},
         { path: 'admin', name: 'AdminInfo', component: () => import('@/views/manager/AdminInfo.vue')},
         { path: 'music', name: 'MusicInfo', component: () => import('@/views/manager/MusicInfo.vue'),},
-        { path: 'logs', name: 'LogInfo', component: () => import('@/views/manager/LogInfo.vue')},
+        { path: 'logs', name: 'LogInfo', component: () => import('@/views/manager/CarouselInfo.vue')},
         { path: 'notice', name: 'NoticeInfo', component: () => import('@/views/manager/NoticeInfo.vue')},
         { path: 'songlist', name: 'SongListInfo', component: () => import('@/views/manager/SongListInfo.vue')},
       ]
@@ -26,9 +26,15 @@ const router = createRouter({
       path: '/user',
       name: 'user',
       component: () => import('@/views/User.vue'),
+      redirect: 'user/home',
       children: [
-        { path: 'home', name: 'Home', component: () => import('@/views/user/ManagerHome.vue')},
-        { path: 'personal', name: 'PersonalInfo', component: () => import('@/views/user/personalInfo.vue')},
+        { path: 'home', name: 'Home', component: () => import('@/views/user/UserHome.vue')},
+        { path: 'singers', name: 'Singers', component: () => import('@/views/user/Singers.vue')},
+        { path: 'songs', name: 'Songs', component: () => import('@/views/user/Songs.vue')},
+        { path: 'songLists', name: 'SongLists', component: () => import('@/views/user/SongLists.vue')},
+        { path: 'creatorCenter', name: 'CreatorCenter', component: () => import('@/views/user/CreatorCenter.vue')},
+        { path: 'profile', name: 'Profile', component: () => import('@/views/user/Profile.vue')},
+        { path: 'favorites', name: 'Favorites', component: () => import('@/views/user/Favorites.vue')},
       ]
     },
     { path: '/lyrics', name: 'LyricsPage', component: () => import('@/views/LyricsPage.vue'),}

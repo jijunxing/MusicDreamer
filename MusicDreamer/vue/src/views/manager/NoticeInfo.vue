@@ -91,7 +91,6 @@
 import {reactive, onMounted} from "vue";
 import request from "@/utils/request";
 import {ElMessage, ElMessageBox} from "element-plus";
-import {Delete, Edit} from "@element-plus/icons-vue";
 
 const data = reactive({
   tableData: [],

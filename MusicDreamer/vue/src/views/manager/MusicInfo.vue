@@ -16,7 +16,7 @@
       <div style="margin-bottom: 10px">
         <el-button type="primary" @click="handleAdd">新增</el-button>
       </div>
-      <el-table :data="data.tableData" style="width: 100%">
+      <el-table :data="data.tableData" style="width: 100%" v-loading="data.loading">
         <el-table-column prop="musicId" label="ID" width="70"/>
         <el-table-column prop="musicName" label="歌曲名"/>
         <el-table-column prop="imageUrl" label="封面">
@@ -149,7 +149,8 @@ const data = reactive({
   form: {},
   keyword: '',
   tagList: [],
-  selectedTags: {}
+  selectedTags: {},
+  loading: true
 })
 
 const groupedTags = computed(() => {
@@ -183,11 +184,12 @@ const load = () => {
   }).then(res => {
     data.tableData = res.data?.list || []
     data.total = res.data.total
+    setTimeout(() => { data.loading = false }, 250);
   })
 }
 
 const reset = () => {
-  data.musicName = null;
+  data.keyword = null;
   load();
 }
 

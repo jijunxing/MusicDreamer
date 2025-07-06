@@ -45,8 +45,8 @@
               <span>系统管理</span>
             </template>
             <el-menu-item index="/admin/logs">
-              <el-icon><Memo /></el-icon>
-              <span>日志信息</span>
+              <el-icon><Picture /></el-icon>
+              <span>轮播图管理</span>
             </el-menu-item>
             <el-menu-item index="/admin/notice">
               <el-icon><DataAnalysis /></el-icon>
@@ -71,7 +71,7 @@
               <span>歌手信息</span>
             </el-menu-item>
           </el-sub-menu>
-          
+
           <el-sub-menu index="4">
             <template #title>
               <el-icon><Headset /></el-icon>
@@ -172,16 +172,15 @@ const handleAvatarError = () => {
 }
 
 .logo-text {
-  font-family: 'Arial', sans-serif;
   font-size: 24px;
   font-weight: bold;
-  color: #F9B44C;
-  margin: 0;
-  background: linear-gradient(45deg, #F9B44C, #ff9f43);
+  background: linear-gradient(to right, #ff9a3c, #ffd166);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 10px rgba(255, 154, 60, 0.5);
 }
+
 
 .header-right {
   display: flex;

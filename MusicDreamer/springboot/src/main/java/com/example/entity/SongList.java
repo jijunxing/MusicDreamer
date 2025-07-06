@@ -11,6 +11,7 @@ public class SongList {
     private String imageUrl;
     private String about;
     private Integer user;
+    private String userName;
     private String createTime;
     private List<Music> musics;
     private Integer musicCount;

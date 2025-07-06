@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -54,13 +55,13 @@ public class FileController {
     public void download(@PathVariable String type,
                          @PathVariable String fileName,
                          HttpServletResponse response) throws IOException {
-        // 取消URL解码
+
         String realName = fileName; // 直接使用原始文件名
         String filePath = System.getProperty("user.dir") + "/uploadFiles/" + type + "/" + realName;
 
         // 设置响应头（空格已去除，无需还原）
         response.setHeader("Content-Disposition",
-                "attachment; filename=\"" + realName + "\"");
+                "attachment; filename=\"" + URLEncoder.encode(realName) + "\"");
 
         byte[] bytes = FileUtil.readBytes(filePath);
         ServletOutputStream os = response.getOutputStream();

@@ -348,7 +348,6 @@ const removeSong = async (index) => {
   }
   // 从播放列表中删除该歌曲
   player.queue.splice(index, 1);
-  await player.next()
 };
 
 const router = useRouter()
