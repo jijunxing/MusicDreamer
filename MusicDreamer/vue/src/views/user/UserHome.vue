@@ -24,7 +24,6 @@
                 class="carousel-image"
             />
           </div>
-
         </el-carousel-item>
       </el-carousel>
     </div>
@@ -36,21 +35,20 @@
         <span class="view-more" @click="navigateToSongs" style="margin-left: 10px">>>查看更多</span></h2>
       <div class="music-list">
         <div v-for="music in musicList" :key="music.musicId" class="music-item">
-          <div class="music-main" @click="playMusic(music)">
-            <div class="cover-container-song">
+          <div class="music-main">
+            <div class="cover-container-song" @click="playMusic(music)">
               <img :src="music.imageUrl" alt="歌曲封面" class="music-cover"/>
-              <div class="play-icon">
-                <el-icon>
-                  <VideoPlay/>
-                </el-icon>
+              <div class="play-overlay">
+                <el-icon :size="36" color="#fff"><VideoPlay /></el-icon>
               </div>
-
+              <div class="play-count">
+                <el-icon><Headset /></el-icon> {{ music.listenNumb || 0 }}
+              </div>
             </div>
             <div class="music-info">
               <div class="music-name">{{ music.musicName }}</div>
               <div class="singer-name">{{ music.singerName }}</div>
               <div class="music-stats">
-                <span><el-icon><Headset/></el-icon> {{ music.listenNumb || 0 }}</span>
                 <span class="tags">
                   <el-tag v-for="tag in music.tags" :key="tag.id" size="small" class="tag">
                     {{ tag.name }}
@@ -106,7 +104,7 @@
 </template>
 
 <script setup>
-import {ref, onMounted} from 'vue'
+import {ref, onMounted, reactive} from 'vue'
 import request from '@/utils/request'
 import {useRouter} from 'vue-router'
 import {ElMessage} from "element-plus";
@@ -116,7 +114,13 @@ const router = useRouter()
 const carouselList = ref([])
 const musicList = ref([])
 const songList = ref([])
-
+const carouselData = reactive({
+  type: '',
+  id: null,
+  music: {},
+  singer: {},
+  songList: {}
+})
 // 获取轮播图数据
 const fetchCarouselData = async () => {
   request.get('/carousel/selectAll').then((res) => {
@@ -136,17 +140,21 @@ const formatDate = (dateString) => {
 
 // 导航到相关内容
 const navigateToRelated = (item) => {
-  if (item.relatedType && item.relatedId) {
-    const routeName = {
-      'song': 'songs',
-      'songLits': 'songLists',
-      'singer': 'singer'
-    }[item.relatedType.toLowerCase()]
-
-    if (routeName) {
-      router.push({name: routeName, params: {id: item.relatedId}})
-    }
+  if(item.relatedType === 'SONG') {
+    request.get('music/selectById/' + item.relatedId).then(async res=>{
+      carouselData.music = res.data
+      await player.play(carouselData.music)
+      await router.push('/lyrics')
+    })
   }
+  else if(item.relatedType === 'SINGER') {
+    router.push(`/user/singers/${item.relatedId}`)
+  }
+  else if(item.relatedType === 'SONGLIST') {
+    router.push(`/user/songLists/${item.relatedId}`)
+  }
+  else
+    ElMessage.warning('相关内容不存在')
 }
 
 // 获取推荐歌曲
@@ -219,11 +227,11 @@ const viewSongList = (songlist) => {
 }
 
 const navigateToSongs = () => {
-  router.push({name: 'songs'}) // 替换为实际路由名
+  router.push('/user/songs') // 替换为实际路由名
 }
 
 const navigateToSongLists = () => {
-  router.push({name: 'songLists'}) // 替换为实际路由名
+  router.push('/user/songLists') // 替换为实际路由名
 }
 
 onMounted(() => {
@@ -347,9 +355,16 @@ onMounted(() => {
 
 .cover-container-song {
   position: relative;
-  flex-shrink: 0;
   width: 100px;
   height: 100px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cover-container-song:hover img {
+  transform: scale(1.05);
 }
 
 .music-cover {
@@ -359,15 +374,13 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-.play-icon {
+.play-overlay {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -375,14 +388,31 @@ onMounted(() => {
   transition: opacity 0.3s ease;
 }
 
-.music-item:hover .play-icon {
+.cover-container-song:hover .play-overlay {
   opacity: 1;
 }
 
-.play-icon .el-icon {
-  color: #409eff;
-  font-size: 18px;
+.play-count {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
 }
+
+.play-count .el-icon {
+  margin-right: 3px;
+  font-size: 14px;
+}
+.music-item:hover {
+  opacity: 1;
+}
+
 
 .music-info {
   flex: 1;
@@ -542,14 +572,6 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.play-total {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #888;
 }
 
 .play-total .el-icon {

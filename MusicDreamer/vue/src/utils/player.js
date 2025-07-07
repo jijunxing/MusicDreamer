@@ -121,6 +121,26 @@ export const player = reactive({
         })
     },
 
+    playList(list) {
+        if (!this.audio) return;
+        if (!Array.isArray(list) || list.length === 0) {
+            ElMessage.warning("播放列表为空");
+            return;
+        }
+
+        // 过滤掉被冻结的歌曲
+        const validList = list.filter(song => song.activation !== 0);
+        if (validList.length === 0) {
+            ElMessage.warning("没有可播放的歌曲");
+            return;
+        }
+
+        this.queue = validList;
+        this.current = null;
+        this.notify();
+
+        this.play(validList[0]);
+    },
 
     // 其他方法保持不变...
     addToQueue(song) {

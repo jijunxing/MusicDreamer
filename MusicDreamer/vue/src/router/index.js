@@ -6,6 +6,7 @@ const router = createRouter({
     { path: '/', redirect: '/login' }, // 添加根路径重定向
     { path: '/login', name: 'Login', component: () => import('@/views/Login.vue')},
     { path: '/register', name: 'Register', component: () => import('@/views/Register.vue')},
+    { path: '/lyrics', name: 'LyricsPage', component: () => import('@/views/LyricsPage.vue')},
     {
       path: '/admin',
       name: 'admin',
@@ -30,14 +31,26 @@ const router = createRouter({
       children: [
         { path: 'home', name: 'Home', component: () => import('@/views/user/UserHome.vue')},
         { path: 'singers', name: 'Singers', component: () => import('@/views/user/Singers.vue')},
+        {
+          path: 'singers/:id',
+          name: 'SingerDetail',
+          component: ()=>import('@/views/user/SingerDetail.vue'),
+          props: (route) => ({
+            singerId: parseInt(route.params.id), // 关键修改：参数重命名+类型转换
+            visible: true // 可传递其他固定参数
+          })
+        },
         { path: 'songs', name: 'Songs', component: () => import('@/views/user/Songs.vue')},
         { path: 'songLists', name: 'SongLists', component: () => import('@/views/user/SongLists.vue')},
         { path: 'creatorCenter', name: 'CreatorCenter', component: () => import('@/views/user/CreatorCenter.vue')},
         { path: 'profile', name: 'Profile', component: () => import('@/views/user/Profile.vue')},
         { path: 'favorites', name: 'Favorites', component: () => import('@/views/user/Favorites.vue')},
+        {
+          path: '/search', name: 'SearchPage', component: () =>import('@/views/user/SearchPage.vue'),
+          props: (route) => ({ keyword: route.query.keyword || '' }) // 自动解析 keyword 参数
+        },
       ]
     },
-    { path: '/lyrics', name: 'LyricsPage', component: () => import('@/views/LyricsPage.vue'),}
   ]
 })
 

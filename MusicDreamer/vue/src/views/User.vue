@@ -16,16 +16,12 @@
             text-color="#e0e0e0"
             active-text-color="#ff9a3c"
             :default-active="$route.path"
-            :default-openeds="['/home', '2']"
         >
           <el-menu-item index="/user/home">首页</el-menu-item>
           <el-menu-item index="/user/singers">歌手</el-menu-item>
           <el-menu-item index="/user/songs">歌曲</el-menu-item>
           <el-menu-item index="/user/SongLists">歌单</el-menu-item>
-          <el-menu-item index="/user/creatorCenter" class="creator-center">
-              <el-icon><EditPen /></el-icon>
-              <span>创作者中心</span>
-          </el-menu-item>
+          <el-menu-item index="/user/creatorCenter">创作者中心</el-menu-item>
         </el-menu>
       </div>
 
@@ -235,6 +231,7 @@ function logout() {
 
 .search-container {
   width: 220px;
+  color: #0a0a0a;
 }
 
 .search-container :deep(.el-input__inner) {
@@ -246,7 +243,7 @@ function logout() {
 }
 
 .search-container :deep(.el-input__inner:focus) {
-  width: 260px;
+  width: 220px;
   background: rgba(255, 255, 255, 0.15);
   box-shadow: 0 0 15px rgba(255, 154, 60, 0.2);
 }

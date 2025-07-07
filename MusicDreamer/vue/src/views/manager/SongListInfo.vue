@@ -324,10 +324,8 @@ const playSonglist = (row) => {
     ElMessage.warning("歌单为空")
     return
   }
-  player.clear()
-  row.musics?.forEach(music => player.addToQueue(music))
-  ElMessage.success('歌单已加入播放队列')
-  player.play(row.musics[0])
+  player.playList(row.musics)
+  ElMessage.success('开始播放歌单全部歌曲')
 }
 </script>
 
