@@ -1,16 +1,32 @@
 <template>
   <div id="MusicControl" ref="playerRef">
-    <div class="control-bar">
+    <!-- 迷你模式 -->
+    <div v-if="isMiniMode" class="mini-mode" @mousedown="startDrag" @touchstart="startDrag"
+         :style="{ left: miniModePosition.x + 'px', top: miniModePosition.y + 'px' }">
+      <div class="mini-cover-wrapper" :class="{ rotating: isMusicPlaying }">
+        <img :src="coverUrl" @error="handleCoverError" alt="封面" class="mini-cover-image"/>
+      </div>
+      <div class="mini-controls">
+        <button class="mini-play-btn" @click.stop="toggleMusic" title="播放/暂停">
+          <Icon :icon="isMusicPlaying ? 'mdi:pause-circle' : 'mdi:play-circle'"/>
+        </button>
+        <button class="mini-next-btn" @click.stop="handleNext" title="下一首">
+          <Icon icon="mdi:skip-next"/>
+        </button>
+      </div>
+    </div>
+
+    <!-- 完整模式 -->
+    <div v-else class="control-bar">
       <div class="player-content">
-        <!-- 歌曲信息 -->
         <!-- 歌曲信息 + 封面 -->
         <div class="info-and-cover" @click="goToLyricsPage">
           <div class="song-info-vertical">
-            <div class="song-title-vertical">{{ currentMusic.musicName || '歌名'}}</div>
+            <div class="song-title-vertical">{{ currentMusic.musicName || '歌名' }}</div>
             <div class="song-artist-vertical">{{ currentMusic.singerName || '歌手' }}</div>
           </div>
           <div class="cover-wrapper" :class="{ rotating: isMusicPlaying }">
-            <img :src="coverUrl" @error="handleCoverError" alt="封面" class="cover-image" />
+            <img :src="coverUrl" @error="handleCoverError" alt="封面" class="cover-image"/>
           </div>
         </div>
 
@@ -28,32 +44,35 @@
         <!-- 播放控制按钮 -->
         <div class="main-controls">
           <button class="mode-btn" @click="togglePlayMode" :title="playModeTitle">
-            <Icon :icon="playModeIcon" />
+            <Icon :icon="playModeIcon"/>
           </button>
           <button class="playlist-btn" @click="togglePlaylist" title="播放列表">
-            <Icon icon="mdi:playlist-music" />
+            <Icon icon="mdi:playlist-music"/>
           </button>
           <button class="prev-btn" @click="handlePrev" title="上一首">
-            <Icon icon="mdi:skip-previous" />
+            <Icon icon="mdi:skip-previous"/>
           </button>
           <button class="play-btn" @click="toggleMusic" title="播放/暂停">
-            <Icon :icon="isMusicPlaying ? 'mdi:pause-circle' : 'mdi:play-circle'" />
+            <Icon :icon="isMusicPlaying ? 'mdi:pause-circle' : 'mdi:play-circle'"/>
           </button>
           <button class="next-btn" @click="handleNext" title="下一首">
-            <Icon icon="mdi:skip-next" />
+            <Icon icon="mdi:skip-next"/>
           </button>
-          <button class="favorite-btn" @click="toggleFavorite" :title="isFavorite ? '取消喜欢' : '喜欢'">
-            <Icon :icon="isFavorite ? 'mdi:heart' : 'mdi:heart-outline'" :color="isFavorite ? '#ff4081' : ''" />
+          <button class="favorite-btn" @click="toggleFavorite(player.current)" :title="isLike ? '取消喜欢' : '喜欢'">
+            <transition name="bounce">
+              <Icon v-if="isLike" icon="mdi:heart" color="#ff4081"/>
+            </transition>
+            <Icon v-if="!isLike" icon="mdi:heart-outline"/>
           </button>
           <!-- 音量控制 -->
           <div class="volume-control" @mouseenter="showVolume = true" @mouseleave="showVolume = false">
             <button class="volume-btn" :title="isMuted ? '取消静音' : '静音'" @click="toggleMute">
-              <Icon :icon="isMuted ? 'mdi:volume-off' : 'mdi:volume-high'" />
+              <Icon :icon="isMuted ? 'mdi:volume-off' : 'mdi:volume-high'"/>
             </button>
             <transition name="slide-down">
               <div class="volume-slider" v-show="showVolume">
                 <input type="range" min="0" max="1" step="0.01" v-model.number="volume" @input="handleVolumeChange"
-                       class="vertical-slider" :style="{'--volume-percent': volume * 100 + '%'}" />
+                       class="vertical-slider" :style="{'--volume-percent': volume * 100 + '%'}"/>
               </div>
             </transition>
           </div>
@@ -70,25 +89,37 @@
               <div class="song-title-list">{{ song.musicName }}</div>
               <div class="song-artist-list">{{ song.singerName || '未知艺术家' }}</div>
             </div>
-            <div class="song-duration">{{ Math.floor(song.timelength/60)}}:{{song.timelength%60}}</div>
-            <div class="delete-btn" @click.stop="removeSong(index)" title="删除">
-              <Icon icon="mdi:delete" />
+            <div class="song-duration">{{ formatTime(song.timelength) }}</div>
+            <div class="song-actions">
+              <div class="like-btn" @click.stop="toggleLikeInPlaylist(song)"
+                   :title="userLikesMap[song.musicId] ? '取消喜欢' : '喜欢'">
+                <transition name="bounce">
+                  <Icon v-if="userLikesMap[song.musicId]" icon="mdi:heart" color="#ff4081"/>
+                </transition>
+                <Icon v-if="!userLikesMap[song.musicId]" icon="mdi:heart-outline"/>
+              </div>
+              <div class="delete-btn" @click.stop="removeSong(index)" title="删除">
+                <Icon icon="mdi:delete"/>
+              </div>
             </div>
           </div>
         </div>
       </transition>
     </div>
 
-    <audio ref="bgMusic" crossorigin="anonymous" />
+    <audio ref="bgMusic" crossorigin="anonymous"/>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { player } from "@/utils/player"
-import { Icon } from '@iconify/vue'
+import {ref, computed, onMounted, onUnmounted, watch} from 'vue'
+import {useRouter} from 'vue-router'
+import {player} from "@/utils/player"
+import {Icon} from '@iconify/vue'
 import defaultCover from "@/assets/imgs/default_cover.svg";
+import request from "@/utils/request";
+import {isMusicLiked, updateLikeStatus} from '@/utils/likeUtils';
+
 const showPlaylist = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
@@ -98,8 +129,24 @@ const showVolume = ref(false)
 const bgMusic = ref(null)
 const playerRef = ref(null)
 const currentMusic = computed(() =>
-    player.current || { name: '无歌曲', artist: '' }
+    player.current || {name: '无歌曲', artist: ''}
 )
+
+const isMiniMode = ref(false)
+const miniModePosition = ref({x: window.innerWidth - 100, y: 100})
+const isDragging = ref(false)
+const dragStartPos = ref({x: 0, y: 0})
+
+const userLikesMap = ref({}) // 存储 { musicId: likeId } 的映射
+const currentUserId = ref(null)
+
+// 使用计算属性获取当前歌曲点赞状态
+const isLike = computed(() => {
+  if (player.current && player.current.musicId) {
+    return !!userLikesMap.value[player.current.musicId];
+  }
+  return false;
+});
 
 const handleLoadedMetadata = () => {
   if (player.audio) {
@@ -107,7 +154,6 @@ const handleLoadedMetadata = () => {
     if (audioDuration > 0 && !isNaN(audioDuration) && isFinite(audioDuration)) {
       duration.value = audioDuration;
     } else {
-      // 从音乐信息中获取时长（假设单位为秒）
       duration.value = currentMusic.value.timelength || 0;
     }
   }
@@ -118,7 +164,7 @@ const syncState = () => {
   if (!player.audio) return;
 
   const newTime = player.audio.currentTime;
-  if (Math.abs(newTime - currentTime.value) > 0.05) { // 避免无效更新
+  if (Math.abs(newTime - currentTime.value) > 0.05) {
     currentTime.value = newTime;
   }
 
@@ -130,24 +176,71 @@ const syncState = () => {
   }
 };
 
-
 // 注册状态更新监听器
 onMounted(() => {
   player.setAudioElement(bgMusic.value)
-
-  // 注册状态更新监听器
   player.listeners.add(syncState)
-
-  // 初始同步状态
   syncState()
-
   document.addEventListener('click', onClickOutside)
+
+  // 获取当前用户ID
+  const user = JSON.parse(localStorage.getItem('currentUser'));
+  if (user) currentUserId.value = user.id;
+
+  // 从localStorage加载点赞数据
+  const savedLikes = localStorage.getItem('userLikes');
+  if (savedLikes) {
+    userLikesMap.value = JSON.parse(savedLikes);
+  }
+
+  // 获取用户所有点赞记录
+  if (currentUserId.value) {
+    request.get('/like/selectAll', {
+      params: {userId: currentUserId.value}
+    }).then(res => {
+      if (res.data) {
+        const newLikesMap = {};
+        res.data.forEach(like => {
+          newLikesMap[like.musicId] = like.id;
+        });
+        userLikesMap.value = newLikesMap;
+        localStorage.setItem('userLikes', JSON.stringify(newLikesMap));
+      }
+    });
+  }
+
+  // 添加全局事件监听
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'userLikes') {
+      userLikesMap.value = JSON.parse(event.newValue);
+    }
+  });
+
+  // 定时同步点赞数据（每30分钟）
+  setInterval(() => {
+    if (currentUserId.value) {
+      request.get('/like/selectAll', {
+        params: {userId: currentUserId.value}
+      }).then(res => {
+        if (res.data) {
+          const newLikesMap = {};
+          res.data.forEach(like => {
+            newLikesMap[like.musicId] = like.id;
+          });
+          userLikesMap.value = newLikesMap;
+          localStorage.setItem('userLikes', JSON.stringify(newLikesMap));
+        }
+      });
+    }
+  }, 30 * 60 * 1000);
 })
 
 // 组件卸载时移除监听器
 onUnmounted(() => {
   player.listeners.delete(syncState)
   document.removeEventListener('click', onClickOutside)
+  window.removeEventListener('storage', () => {
+  });
 })
 
 const onClickOutside = (e) => {
@@ -172,8 +265,6 @@ const progress = computed(() => {
 
 // 播放控制方法
 const toggleMusic = () => player.toggle();
-
-
 const handlePrev = () => player.prev()
 const handleNext = () => player.next()
 
@@ -255,7 +346,6 @@ const togglePlaylist = () => {
 // 时间格式化
 const formatTime = (seconds) => {
   if (isNaN(seconds)) return "0:00"
-
   const minutes = Math.floor(seconds / 60)
   seconds = Math.floor(seconds % 60)
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
@@ -280,7 +370,7 @@ watch(() => player.current, () => {
   } else {
     coverUrl.value = defaultCover
   }
-}, { immediate: true })
+}, {immediate: true})
 
 const handleCoverError = () => {
   coverUrl.value = defaultCover
@@ -311,9 +401,12 @@ const togglePlayMode = () => player.togglePlayMode();
 // 播放模式图标和标题
 const playModeIcon = computed(() => {
   switch (player.playMode) {
-    case 'loop': return 'mdi:repeat-once'
-    case 'list-loop': return 'mdi:repeat'
-    case 'random': return 'mdi:shuffle'
+    case 'loop':
+      return 'mdi:repeat-once'
+    case 'list-loop':
+      return 'mdi:repeat'
+    case 'random':
+      return 'mdi:shuffle'
     case 'order':
     default:
       return 'mdi:playlist-play'
@@ -322,21 +415,17 @@ const playModeIcon = computed(() => {
 
 const playModeTitle = computed(() => {
   switch (player.playMode) {
-    case 'loop': return '单曲循环'
-    case 'list-loop': return '列表循环'
-    case 'random': return '随机播放'
+    case 'loop':
+      return '单曲循环'
+    case 'list-loop':
+      return '列表循环'
+    case 'random':
+      return '随机播放'
     case 'order':
     default:
       return '顺序播放'
   }
 })
-
-// 爱心按钮功能（暂时只实现UI）
-const isFavorite = ref(false)
-const toggleFavorite = () => {
-  isFavorite.value = !isFavorite.value
-  // 后续可在此处添加喜欢功能的实现
-}
 
 const removeSong = async (index) => {
   // 如果删除的是当前正在播放的歌曲
@@ -348,7 +437,6 @@ const removeSong = async (index) => {
   }
   // 从播放列表中删除该歌曲
   player.queue.splice(index, 1);
-  await player.next()
 };
 
 const router = useRouter()
@@ -359,6 +447,119 @@ const goToLyricsPage = () => {
     name: 'LyricsPage',
   })
 }
+
+// 切换迷你模式
+const toggleMiniMode = () => {
+  isMiniMode.value = !isMiniMode.value
+}
+
+// 拖拽相关事件处理
+const startDrag = (e) => {
+  // 阻止事件冒泡，避免触发父元素点击事件
+  e.stopPropagation();
+
+  // 获取初始位置（支持触摸事件）
+  const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+  const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+  isDragging.value = true;
+  dragStartPos.value = {
+    x: clientX - miniModePosition.value.x,
+    y: clientY - miniModePosition.value.y
+  };
+
+  // 添加移动和释放事件监听
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('touchmove', onDrag, {passive: false});
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('touchend', stopDrag);
+};
+
+const onDrag = (e) => {
+  if (!isDragging.value) return;
+
+  // 阻止页面滚动（触摸事件）
+  if (e.type.includes('touch')) {
+    e.preventDefault();
+  }
+
+  // 获取当前位置（支持触摸事件）
+  const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+  const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+  // 更新位置
+  miniModePosition.value = {
+    x: Math.max(0, Math.min(window.innerWidth - 100, clientX - dragStartPos.value.x)),
+    y: Math.max(0, Math.min(window.innerHeight - 100, clientY - dragStartPos.value.y))
+  };
+};
+
+const stopDrag = () => {
+  isDragging.value = false;
+
+  // 移除事件监听器
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('touchmove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  document.removeEventListener('touchend', stopDrag);
+};
+
+// 添加键盘快捷键支持
+onMounted(() => {
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+M 切换迷你模式
+    if (e.ctrlKey && e.key === 'm') {
+      toggleMiniMode()
+      e.preventDefault()
+    }
+    // ESC 退出迷你模式
+    if (e.key === 'Escape' && isMiniMode.value) {
+      toggleMiniMode()
+      e.preventDefault()
+    }
+  })
+})
+
+watch(() => player.current, (newSong) => {
+  if (newSong) {
+    isLike.value = isMusicLiked(newSong.musicId);
+  }
+}, {immediate: true});
+
+const toggleFavorite = async (song = null) => {
+  const targetSong = song || player.current;
+  if (!targetSong || !targetSong.musicId) return;
+
+  // 未登录处理
+  if (!currentUserId.value) {
+    alert('请先登录');
+    return router.push('/login');
+  }
+
+  const musicId = targetSong.musicId;
+  const isLiked = !!userLikesMap.value[musicId];
+  if (isLiked) {
+    await request.delete(`/like/delete/${userLikesMap.value[musicId]}`);
+    delete userLikesMap.value[musicId];
+  } else {
+    const res = await request.post('/like/add', {
+      userId: currentUserId.value,
+      musicId: musicId
+    });
+    userLikesMap.value = {
+      ...userLikesMap.value,
+      [musicId]: res.data
+    };
+  }
+
+  // 更新本地存储
+  updateLikeStatus(musicId, userLikesMap.value[musicId]);
+};
+
+// 播放列表中的点赞方法
+const toggleLikeInPlaylist = (song) => {
+  toggleFavorite(song);
+};
 </script>
 
 <style scoped>
@@ -370,6 +571,7 @@ const goToLyricsPage = () => {
   --hover-color: #222;
   --highlight-color: #2a2a2a;
   --volume-percent: 0%;
+  --heart-color: #ff4081; /* 新增爱心颜色变量 */
 }
 
 #MusicControl {
@@ -382,6 +584,74 @@ const goToLyricsPage = () => {
   z-index: 1001;
   color: var(--text-color);
   font-family: "Segoe UI", sans-serif;
+}
+
+/* 迷你模式样式 */
+.mini-mode {
+  position: fixed;
+  left: v-bind('miniModePosition.x + "px"');
+  top: v-bind('miniModePosition.y + "px"');
+  z-index: 2000;
+  width: 100px;
+  height: 100px;
+  cursor: move;
+  transition: transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mini-mode:hover {
+  transform: scale(1.05);
+}
+
+.mini-cover-wrapper {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.5s linear;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.mini-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.mini-controls {
+  position: absolute;
+  bottom: -50px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 25px;
+  padding: 8px 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.mini-mode:hover .mini-controls {
+  opacity: 1;
+}
+
+.mini-play-btn, .mini-next-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mini-play-btn:hover, .mini-next-btn:hover {
+  color: var(--primary-color);
+  transform: scale(1.15);
 }
 
 .control-bar {
@@ -507,7 +777,6 @@ button:hover {
   pointer-events: none; /* 避免干扰滑块操作 */
 }
 
-
 /* Chrome / Safari / Edge */
 .vertical-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -541,8 +810,8 @@ button:hover {
   width: 300px; /* 控制宽度，适当变窄 */
   max-height: 360px;
   overflow-y: auto;
-  background: #fff;
-  border: 1px solid #ccc;
+  background: #ffffff;
+  border: 1px solid #333;
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
@@ -600,6 +869,7 @@ button:hover {
   font-size: 0.75rem;
   color: var(--secondary-color);
   white-space: nowrap;
+  min-width: 40px;
 }
 
 .slide-down-enter-active,
@@ -655,22 +925,11 @@ button:hover {
   cursor: pointer;
   transition: transform 0.3s;
 }
+
 .info-and-cover:hover {
   transform: scale(1.02);
 }
 
-.song-title, .song-artist {
-  display: inline-block;
-  max-width: 45%; /* 给歌名和歌手各自限定最大宽度 */
-  vertical-align: middle;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.song-title:hover,
-.song-artist:hover {
-  color: #4fc3f7;
-}
 /* 封面图样式 */
 .cover-wrapper {
   width: 48px;
@@ -686,10 +945,11 @@ button:hover {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.3s;
 }
-.cover:hover {
+
+.cover-wrapper:hover .cover-image {
   box-shadow: 0 4px 12px rgba(79, 195, 247, 0.4);
 }
 
@@ -722,7 +982,7 @@ button:hover {
 }
 
 .favorite-btn .iconify[data-icon="mdi:heart"] {
-  color: #ff4081; /* 爱心填充时的颜色 */
+  color: var(--heart-color); /* 爱心填充时的颜色 */
 }
 
 /* 调整控制按钮间距 */
@@ -730,5 +990,56 @@ button:hover {
   display: flex;
   align-items: center;
   gap: 14px; /* 稍微增加间距 */
+}
+
+/* 新增：播放列表操作按钮区域 */
+.song-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: 10px;
+}
+
+.like-btn {
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 4px;
+  border-radius: 50%;
+}
+
+.like-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.15);
+}
+
+.delete-btn {
+  margin-left: 0; /* 覆盖之前的样式 */
+}
+
+/* 新增：已喜欢徽章 */
+.favorite-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--heart-color);
+  margin-top: 4px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 点赞动画 */
+.bounce-enter-active {
+  animation: bounce-in 0.5s;
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
 }
 </style>

@@ -3,7 +3,7 @@ package com.example.service;
 import cn.hutool.core.date.DateUtil;
 import com.example.entity.Music;
 import com.example.entity.SongList;
-import com.example.mapper.MusicMapper;
+import com.example.service.MusicService;
 import com.example.mapper.SongListMapper;
 import com.example.util.Result;
 import jakarta.annotation.Resource;
@@ -21,7 +21,7 @@ public class SongListService {
     @Resource
     private SongListMapper songListMapper;
     @Resource
-    private MusicMapper musicMapper;
+    private MusicService musicService;
 
     public int add(SongList songList) {
         songList.setCreateTime(DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
@@ -41,7 +41,7 @@ public class SongListService {
         List<Integer> musicIds = songListMapper.selectMusicIdsByListId(id);
         List<Music> musics = new ArrayList<>();
         for (Integer musicId : musicIds) {
-            musics.add(musicMapper.selectById(musicId));
+            musics.add(musicService.selectById(musicId));
         }
         songList.setMusics(musics);
         return songList;
@@ -53,7 +53,7 @@ public class SongListService {
             List<Integer> musicIds = songListMapper.selectMusicIdsByListId(songList.getId());
             List<Music> musics = new ArrayList<>();
             for (Integer musicId : musicIds) {
-                musics.add(musicMapper.selectById(musicId));
+                musics.add(musicService.selectById(musicId));
             }
             songList.setMusics(musics);
         }
@@ -76,7 +76,7 @@ public class SongListService {
 
     public List<Music> selectForSonglist(String keyword, Integer excludeSonglistId) {
         List<Integer> existingIds = songListMapper.selectMusicIdsByListId(excludeSonglistId);
-        return musicMapper.selectByKeywordExcludingIds(keyword, existingIds);
+        return musicService.selectByKeywordExcludingIds(keyword, existingIds);
     }
 
     public void addMusics(Map<String, Object> body) {

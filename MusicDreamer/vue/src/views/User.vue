@@ -4,93 +4,154 @@
     <header class="main-header">
       <div class="header-left">
         <div class="logo-container">
-          <img src="@/assets/imgs/logo.svg" alt="Logo" class="logo-img">
-          <h1 class="logo-text">MusicDreamer 悦享音乐</h1>
+          <el-icon :size="32" color="#ff9a3c"><Headset /></el-icon>
+          <h1 class="logo-text">MusicDreamer</h1>
         </div>
+
+        <!-- 主导航菜单 -->
+        <el-menu
+            router
+            mode="horizontal"
+            background-color="transparent"
+            text-color="#e0e0e0"
+            active-text-color="#ff9a3c"
+            :default-active="$route.path"
+        >
+          <el-menu-item index="/user/home">首页</el-menu-item>
+          <el-menu-item index="/user/songs">歌曲</el-menu-item>
+          <el-menu-item index="/user/singers">歌手</el-menu-item>
+          <el-menu-item index="/user/SongLists">歌单</el-menu-item>
+          <el-menu-item index="/user/creatorCenter">创作者中心</el-menu-item>
+
+        </el-menu>
       </div>
 
       <div class="header-right">
-        <div class="user-info">
-          <span class="welcome-text" :class="{ 'admin-text': data.user.role === 'ADMIN' }">
-            欢迎您，{{data.user.username}}
-          </span>
-          <div class="avatar-container">
-            <img
-                :src="avatarUrl"
-                class="user-avatar"
-                @error="handleAvatarError"
-            >
-            <span class="user-name">{{ data.user.name }}</span>
-          </div>
+        <!-- 搜索框 -->
+        <div class="search-container">
+          <el-input
+              v-model="searchText"
+              placeholder="搜索歌曲、歌手..."
+              clearable
+              @keyup.enter="handleSearch"
+          >
+            <template #prefix>
+              <el-icon class="search-icon"><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+
+        <!-- 用户区域 -->
+        <div class="user-area">
+          <el-dropdown v-if="isLoggedIn" trigger="click">
+            <div class="user-info">
+              <el-avatar :src="avatarUrl" @error="handleAvatarError">
+                <el-icon><UserFilled /></el-icon>
+              </el-avatar>
+              <span class="user-name">{{ data.user.name }}</span>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="goToProfile">
+                  <el-icon><User /></el-icon>个人中心
+                </el-dropdown-item>
+                <el-dropdown-item @click="goToFavorites">
+                  <el-icon><Star /></el-icon>我的收藏
+                </el-dropdown-item>
+                <el-dropdown-item @click="logout">
+                  <el-icon><SwitchButton /></el-icon>退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <el-button
+              v-else
+              type="primary"
+              class="login-btn"
+              @click="login"
+          >
+            <el-icon><User /></el-icon>登录
+          </el-button>
         </div>
       </div>
     </header>
-
-    <!-- 其他内容保持不变 -->
-    <div class="main-container">
-      <div class="sidebar">
-        <el-menu
-            router
-            style="border: none"
-            :default-active="$route.path"
-            :default-openeds="['/home', '2']"
-        >
-          <el-menu-item index="/user/home">
-            <el-icon><HomeFilled /></el-icon>
-            <span>首页</span>
-          </el-menu-item>
-          <el-menu-item index="/user/song">
-            <el-icon><Headset /></el-icon>
-            <span>歌曲</span>
-          </el-menu-item>
-          <el-menu-item index="/login" @click="logout">
-            <el-icon><SwitchButton /></el-icon>
-            <span>退出系统</span>
-          </el-menu-item>
-        </el-menu>
-      </div>
-      <div class="content">
-        <router-view @updateUser="updateUser"/>
-      </div>
+    <div class="content">
+      <router-view @updateUser="updateUser"/>
     </div>
   </div>
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router'
-import {reactive} from "vue"
-import { ref, watch } from 'vue'
-import defaultAvatar from '@/assets/imgs/default_avatar.png' // 导入默认头像
+import {ref, computed, onMounted, reactive} from 'vue'
+import { useRouter } from 'vue-router'
 
-const $route = useRoute()
-console.log($route.path)
-const user = JSON.parse(localStorage.getItem('currentUser') || '{}')
 const data = reactive({
   user : JSON.parse(localStorage.getItem('currentUser') || '{}')
 })
-
-const logout = () => {
-  localStorage.removeItem('currentUser')
-  localStorage.removeItem('jwt_token')
-}
-
 const updateUser = () => {
   data.user = JSON.parse(localStorage.getItem('currentUser') || '{}')
 }
+// 路由实例
+const router = useRouter()
 
-// 创建头像URL的响应式引用
-const avatarUrl = ref(data.user.avatar || defaultAvatar)
+// 响应式数据
+const searchText = ref('')
+const isLoggedIn = ref(false)
 
-// 监听用户数据变化
-watch(() => data.user.avatar, (newAvatar) => {
-  avatarUrl.value = newAvatar || defaultAvatar
+// 用户信息
+// 默认头像URL
+const defaultAvatar = '/src/assets/imgs/default_avatar.png'
+
+// 计算头像URL
+const avatarUrl = computed(() =>
+    data.user.avatar || defaultAvatar
+)
+
+// 初始化检查登录状态
+onMounted(() => {
+  checkLoginStatus()
 })
 
-// 头像加载失败处理函数
-const handleAvatarError = () => {
-  avatarUrl.value = defaultAvatar
+// 检查登录状态
+function checkLoginStatus() {
+  if(data.user.id != null)
+    isLoggedIn.value = true
 }
 
+// 头像加载失败处理
+function handleAvatarError() {
+  data.user.avatar = defaultAvatar
+}
+
+// 搜索处理
+function handleSearch() {
+  if (searchText.value.trim()) {
+    router.push(`/search?keyword=${encodeURIComponent(searchText.value)}`)
+  }
+}
+
+// 登录跳转
+function login() {
+  router.push('/login')
+}
+
+// 个人中心
+function goToProfile() {
+  router.push('/user/userCenter')
+}
+
+// 我的收藏
+function goToFavorites() {
+  router.push('/user/favorites')
+}
+
+// 退出登录
+function logout() {
+  localStorage.removeItem('currentUser')
+  isLoggedIn.value = false
+  router.push('/')
+}
 </script>
 
 <style scoped>
@@ -101,19 +162,26 @@ const handleAvatarError = () => {
 }
 
 .main-header {
-  height: 60px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-bottom: 1px solid #e4e7ed;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 70px;
+  background: linear-gradient(135deg, rgba(14, 22, 33, 0.98), rgba(22, 34, 49, 0.95));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 0 30px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  gap: 40px;
 }
 
 .logo-container {
@@ -122,25 +190,116 @@ const handleAvatarError = () => {
   gap: 12px;
 }
 
-.logo-img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
+.logo-text {
+  font-size: 26px;
+  font-weight: bold;
+  background: linear-gradient(to right, #ff9a3c, #ffd166);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 10px rgba(255, 154, 60, 0.5);
 }
 
-.logo-text {
-  font-family: 'Arial', sans-serif;
-  font-size: 24px;
-  font-weight: bold;
-  color: #F9B44C;
-  margin: 0;
-  background: linear-gradient(45deg, #F9B44C, #ff9f43);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+.el-menu {
+  border: none !important;
+  height: 100%;
+}
+
+.el-menu--horizontal > .el-menu-item {
+  height: 70px;
+  line-height: 70px;
+  padding: 0 20px;
+  transition: all 0.3s ease;
+}
+
+.el-menu--horizontal > .el-menu-item:hover {
+  background-color: rgba(255, 154, 60, 0.1) !important;
+}
+
+.el-menu--horizontal > .el-menu-item a {
+  color: inherit;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .header-right {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.search-container {
+  position: relative;
+  width: 220px;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 输入框获得焦点时扩展宽度 */
+.search-container:focus-within {
+  width: 260px;
+}
+
+.search-container :deep(.el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 30px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(255, 154, 60, 0.3);
+  height: 42px;
+  padding: 0 18px;
+  transition: all 0.3s ease;
+}
+
+.search-container :deep(.el-input__inner) {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 14px;
+  padding-left: 10px;
+}
+
+/* 输入框悬停效果 */
+.search-container :deep(.el-input__wrapper:hover) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 154, 60, 0.5);
+}
+
+/* 输入框获得焦点效果 */
+.search-container :deep(.el-input__wrapper.is-focus) {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 154, 60, 0.8);
+  box-shadow: 0 0 0 3px rgba(255, 154, 60, 0.2) !important;
+}
+
+/* 搜索图标样式 */
+.search-container :deep(.search-icon) {
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s ease;
+  font-size: 16px;
+}
+
+/* 输入框获得焦点时图标颜色变化 */
+.search-container:focus-within :deep(.search-icon) {
+  color: #ff9a3c;
+}
+
+/* 清除按钮样式 */
+.search-container :deep(.el-input__suffix) {
+  right: 12px;
+  pointer-events: none;
+}
+
+.search-container :deep(.el-icon) {
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s ease;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.search-container :deep(.el-icon:hover) {
+  color: #ff9a3c;
+}
+
+.user-area {
   display: flex;
   align-items: center;
 }
@@ -148,87 +307,42 @@ const handleAvatarError = () => {
 .user-info {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 10px;
-  border-radius: 20px;
-  transition: background-color 0.3s;
+  gap: 10px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 30px;
+  transition: all 0.3s ease;
 }
 
 .user-info:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-
-
-.admin-text {
-  color: #F56C6C;
-}
-
-.avatar-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s;
-}
-
-.user-avatar:hover {
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .user-name {
   font-size: 14px;
-  color: #303133;
   font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.main-container {
-  flex: 1;
-  display: flex;
+.login-btn {
+  background: linear-gradient(135deg, #ff9a3c, #ff7700);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 119, 0, 0.25);
 }
 
-.sidebar {
-  width: 200px;
-  border-right: 1px solid #ddd;
-  background-color: #fff;
-}
-
-.content {
-  flex: 1;
-  background-color: #f8f8ff;
-  padding: 10px;
-}
-
-/* 优化菜单样式 */
-:deep(.el-menu) {
-  border-right: none;
-}
-
-:deep(.el-menu-item.is-active) {
-  background-color: #ecf5ff;
-  border-right: 3px solid #409EFF;
-}
-
-:deep(.el-menu-item:hover) {
-  background-color: #f5f7fa;
-}
-
-:deep(.el-menu-item) {
-  border-radius: 4px;
-  margin: 4px 8px;
-  height: 50px;
-  line-height: 50px;
-}
-
-:deep(.el-sub-menu__title) {
-  border-radius: 4px;
-  margin: 4px 8px;
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(255, 119, 0, 0.35);
 }
 </style>

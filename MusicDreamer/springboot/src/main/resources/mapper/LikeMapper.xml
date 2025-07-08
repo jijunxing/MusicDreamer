@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.LikeMapper">
+    <insert id="insert" parameterType="com.example.entity.Like" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO like_music (user_id, music_id, create_time)
+        VALUES (#{userId}, #{musicId}, #{createTime})
+    </insert>
+    <delete id="deleteById">
+        DELETE FROM like_music WHERE id = #{id}
+    </delete>
+    <select id="selectById" resultType="com.example.entity.Like">
+        SELECT * FROM like_music WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultType="com.example.entity.Like">
+        SELECT * FROM like_music
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+</mapper> 

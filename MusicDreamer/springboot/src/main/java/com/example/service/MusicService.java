@@ -32,13 +32,12 @@ public class MusicService {
     MusicMapper musicMapper;
     @Resource
     TagMapper tagMapper;
-    public Integer add(Music music) {
+    public void add(Music music) {
         music.setActivation(1);
         music.setListenNumb(0);
         music.setCreateTime(DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
         music.setTimelength(getMp3Duration(music.getMusicUrl()));
         musicMapper.insert(music);
-        return music.getMusicId();
     }
 
     public void deleteById(Integer id) {
@@ -84,7 +83,7 @@ public class MusicService {
     }
 
     public void addWithTags(Music music) {
-        Integer musicId = musicMapper.insert(music);
+        musicMapper.insert(music);
         if (music.getTags() != null) {
             List<Integer> tagIds = music.getTags().stream().map(Tag::getId).toList();
             musicMapper.insertMusicTags(music.getMusicId(), tagIds);
@@ -209,4 +208,7 @@ public class MusicService {
         return encodedPath.toString();
     }
 
+    public List<Music> selectByKeywordExcludingIds(String keyword, List<Integer> existingIds) {
+        return musicMapper.selectByKeywordExcludingIds(keyword, existingIds);
+    }
 }

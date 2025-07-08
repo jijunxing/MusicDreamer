@@ -1,11 +1,14 @@
 package com.example.mapper;
 
 import com.example.entity.Music;
+import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 public interface MusicMapper {
-    Integer insert(Music music);
+
+    @Options(useGeneratedKeys = true, keyColumn = "music_id", keyProperty = "musicId")
+    void insert(Music music);
     void deleteById(Integer id);
     void updateById(Music music);
     @Select("select music.*, user.username as singerName from music left join user on music.from_singer = user.id where music_id = #{id}")

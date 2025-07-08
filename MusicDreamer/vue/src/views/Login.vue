@@ -110,6 +110,7 @@ const login = () => {
   // 登录前清除旧 token
   localStorage.removeItem('jwt_token');
   localStorage.removeItem('currentUser');
+  localStorage.removeItem('userLikes');
   formRef.value.validate((valid) => {
     if (!valid) return
     
@@ -118,7 +119,18 @@ const login = () => {
       if (res.code === '200') {
         localStorage.setItem('currentUser', JSON.stringify(res.data.user))
         localStorage.setItem('jwt_token', res.data.jwt_token)
-        console.log(res.data)
+        request.get(`/like/selectAll?userId=${res.data.user.id}`)
+            .then(likesRes => {
+              if (likesRes.code === '200') {
+                // 构建歌曲ID到点赞ID的映射
+                const likesMap = {};
+                likesRes.data.forEach(like => {
+                  likesMap[like.musicId] = like.id;
+                });
+                localStorage.setItem('userLikes', JSON.stringify(likesMap));
+                console.log('用户点赞数据已加载', likesMap);
+              }
+            });
         if(res.data.user.role == "ADMIN")
           router.push('/admin/')
         else

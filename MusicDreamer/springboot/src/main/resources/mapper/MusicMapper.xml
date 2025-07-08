@@ -4,9 +4,9 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.mapper.MusicMapper">
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="musicId">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="musicId" keyColumn="music_id">
         insert into music (music_name, music_url, image_url, from_singer, lyrics_url, timelength, activation, create_time, listen_numb)
-        values(#{musicName}, #{musicUrl}, #{imageUrl}, #{fromSinger}, #{lyricsUrl}, #{timelength}, #{activation}, #{createTime}, #{listenNumb})
+        values(#{musicName}, #{musicUrl}, #{imageUrl}, #{fromSinger}, #{lyricsUrl}, #{timelength}, 1, #{createTime}, 0)
     </insert>
 
     <delete id="deleteById">
