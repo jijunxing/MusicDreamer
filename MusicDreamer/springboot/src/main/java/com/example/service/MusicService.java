@@ -209,4 +209,7 @@ public class MusicService {
         return encodedPath.toString();
     }
 
+    public List<Music> selectByKeywordExcludingIds(String keyword, List<Integer> existingIds) {
+        return musicMapper.selectByKeywordExcludingIds(keyword, existingIds);
+    }
 }

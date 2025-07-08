@@ -72,6 +72,45 @@
             class="pagination"
         />
       </el-tab-pane>
+
+      <el-tab-pane label="歌单" name="songlist">
+        <div v-loading="loading">
+          <div v-if="songlistResults.length" class="songlist-grid">
+            <div
+                v-for="songlist in songlistResults"
+                :key="songlist.id"
+                class="songlist-card"
+                @click="viewSongList(songlist)"
+            >
+              <el-image
+                  :src="songlist.imageUrl || defaultPlaylistCover"
+                  class="songlist-cover"
+                  fit="cover"
+              />
+              <div class="songlist-info">
+                <div class="songlist-name">{{ songlist.name }}</div>
+                <div class="songlist-creator">创建者: {{ songlist.userName }}</div>
+                <div class="songlist-meta">
+                  <span>{{ songlist.musicCount || 0 }} 首歌曲</span>
+                  <span>{{ formatDate(songlist.createTime) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="未找到相关歌单" />
+        </div>
+
+        <!-- 歌单分页 -->
+        <el-pagination
+            v-if="songlistPagination.total > 0"
+            v-model:current-page="songlistPagination.pageNum"
+            v-model:page-size="songlistPagination.pageSize"
+            :total="songlistPagination.total"
+            layout="prev, pager, next, jumper"
+            @current-change="handlePageChange('songlist')"
+            class="pagination"
+        />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -82,12 +121,14 @@ import { useRouter } from 'vue-router'
 import { Search, VideoPlay, Headset } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
+import {player} from "@/utils/player";
 
 const router = useRouter()
 
 // 默认图片
 const defaultCover = ref('/src/assets/imgs/default_music_cover.png')
 const defaultAvatar = ref('/src/assets/imgs/default_singer_avatar.png')
+const defaultPlaylistCover = ref('/src/assets/imgs/default_playlist_cover.png')
 
 // 搜索参数
 const keyword = ref('')
@@ -97,6 +138,7 @@ const loading = ref(false)
 // 搜索结果
 const musicResults = ref([])
 const singerResults = ref([])
+const songlistResults = ref([])
 
 // 分页配置（歌曲和歌手独立）
 const musicPagination = ref({
@@ -111,6 +153,11 @@ const singerPagination = ref({
   total: 0
 })
 
+const songlistPagination = ref({
+  pageNum: 1,
+  pageSize: 12,
+  total: 0
+})
 // 防抖定时器
 let searchTimer = null
 
@@ -126,8 +173,10 @@ const handleSearch = () => {
     if (keyword.value.trim()) {
       if (activeTab.value === 'music') {
         searchMusic()
-      } else {
+      } else if (activeTab.value === 'singer') {
         searchSingers()
+      } else if (activeTab.value === 'songlist') { // 歌单搜索
+        searchSongLists()
       }
     }
   }, 300)
@@ -137,6 +186,7 @@ const handleSearch = () => {
 const resetSearch = () => {
   musicResults.value = []
   singerResults.value = []
+  songlistResults.value = []
 }
 
 // 切换标签处理
@@ -152,7 +202,8 @@ const searchMusic = async () => {
   try {
     const res = await request.get('/music/selectPage', {
       params: {
-        keyword: keyword.value,
+        musicName: keyword.value,
+        singerName: keyword.value,
         pageNum: musicPagination.value.pageNum,
         pageSize: musicPagination.value.pageSize
       }
@@ -219,6 +270,40 @@ const searchSingers = async () => {
   }
 }
 
+// 搜索歌单
+const searchSongLists = async () => {
+  loading.value = true
+  try {
+    const res = await request.get('/songlist/selectPage', {
+      params: {
+        name: keyword.value,
+        pageNum: songlistPagination.value.pageNum,
+        pageSize: songlistPagination.value.pageSize
+      }
+    })
+
+    if (res.code === '200') {
+      // 处理歌单数据，添加歌曲数量
+      const processedSonglists = res.data.list.map(songlist => {
+        return {
+          ...songlist,
+          musicCount: songlist.musics ? songlist.musics.length : 0
+        }
+      })
+
+      songlistResults.value = processedSonglists
+      songlistPagination.value.total = res.data.total || 0
+    } else {
+      ElMessage.error('歌单搜索失败: ' + res.msg)
+    }
+  } catch (err) {
+    console.error('歌单搜索错误:', err)
+    ElMessage.error('歌单搜索请求失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 // 分页处理
 const handlePageChange = (type) => {
   if (keyword.value.trim()) {
@@ -232,13 +317,16 @@ const handlePageChange = (type) => {
 
 // 播放音乐
 const playMusic = (music) => {
-  // 这里实现播放逻辑
-  console.log('播放音乐:', music.musicName)
+  player.play(music)
 }
 
 // 查看歌手详情
 const viewSinger = (singer) => {
   router.push({ name: 'SingerDetail', params: { id: singer.id } })
+}
+
+const viewSongList = (songlist) => {
+  router.push({ name: 'SongListDetail', params: { id: songlist.id } })
 }
 
 // 格式化时间 (秒 -> mm:ss)
@@ -247,6 +335,13 @@ const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
+// 格式化日期
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
 }
 
 // 初始化时如果有URL参数

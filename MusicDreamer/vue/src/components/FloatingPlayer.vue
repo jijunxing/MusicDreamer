@@ -1,6 +1,25 @@
 <template>
   <div id="MusicControl" ref="playerRef">
-    <div class="control-bar">
+    <!-- 迷你模式 -->
+    <div v-if="isMiniMode" class="mini-mode" @mousedown="startDrag" @touchstart="startDrag">
+      <div class="mini-cover-wrapper" :class="{ rotating: isMusicPlaying }">
+        <img :src="coverUrl" @error="handleCoverError" alt="封面" class="mini-cover-image" />
+      </div>
+      <div class="mini-controls">
+        <button class="mini-play-btn" @click.stop="toggleMusic" title="播放/暂停">
+          <Icon :icon="isMusicPlaying ? 'mdi:pause-circle' : 'mdi:play-circle'" />
+        </button>
+        <button class="mini-next-btn" @click.stop="handleNext" title="下一首">
+          <Icon icon="mdi:skip-next" />
+        </button>
+        <button class="mini-exit-btn" @click.stop="toggleMiniMode" title="退出迷你模式">
+          <Icon icon="mdi:close" />
+        </button>
+      </div>
+    </div>
+
+    <!-- 完整模式 -->
+    <div v-else class="control-bar">
       <div class="player-content">
         <!-- 歌曲信息 -->
         <!-- 歌曲信息 + 封面 -->
@@ -100,6 +119,10 @@ const playerRef = ref(null)
 const currentMusic = computed(() =>
     player.current || { name: '无歌曲', artist: '' }
 )
+const isMiniMode = ref(false)
+const miniModePosition = ref({ x: window.innerWidth - 100, y: 100 })
+const isDragging = ref(false)
+const dragStartPos = ref({ x: 0, y: 0 })
 
 const handleLoadedMetadata = () => {
   if (player.audio) {
@@ -358,6 +381,78 @@ const goToLyricsPage = () => {
     name: 'LyricsPage',
   })
 }
+
+// 切换迷你模式
+const toggleMiniMode = () => {
+  isMiniMode.value = !isMiniMode.value
+}
+
+// 拖拽相关事件处理
+const startDrag = (e) => {
+  // 阻止事件冒泡，避免触发父元素点击事件
+  e.stopPropagation();
+
+  // 获取初始位置（支持触摸事件）
+  const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+  const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+  isDragging.value = true;
+  dragStartPos.value = {
+    x: clientX - miniModePosition.value.x,
+    y: clientY - miniModePosition.value.y
+  };
+
+  // 添加移动和释放事件监听
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('touchmove', onDrag, { passive: false });
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('touchend', stopDrag);
+};
+
+const onDrag = (e) => {
+  if (!isDragging.value) return;
+
+  // 阻止页面滚动（触摸事件）
+  if (e.type.includes('touch')) {
+    e.preventDefault();
+  }
+
+  // 获取当前位置（支持触摸事件）
+  const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+  const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+  // 更新位置
+  miniModePosition.value = {
+    x: Math.max(0, Math.min(window.innerWidth - 100, clientX - dragStartPos.value.x)),
+    y: Math.max(0, Math.min(window.innerHeight - 100, clientY - dragStartPos.value.y))
+  };
+};
+
+const stopDrag = () => {
+  isDragging.value = false;
+
+  // 移除事件监听器
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('touchmove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  document.removeEventListener('touchend', stopDrag);
+};
+// 添加键盘快捷键支持
+onMounted(() => {
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+M 切换迷你模式
+    if (e.ctrlKey && e.key === 'm') {
+      toggleMiniMode()
+      e.preventDefault()
+    }
+    // ESC 退出迷你模式
+    if (e.key === 'Escape' && isMiniMode.value) {
+      toggleMiniMode()
+      e.preventDefault()
+    }
+  })
+})
+
 </script>
 
 <style scoped>
@@ -382,6 +477,81 @@ const goToLyricsPage = () => {
   color: var(--text-color);
   font-family: "Segoe UI", sans-serif;
 }
+
+/* 迷你模式样式 */
+.mini-mode {
+  position: fixed;
+  left: v-bind('miniModePosition.x + "px"');
+  top: v-bind('miniModePosition.y + "px"');
+  z-index: 2000;
+  width: 100px;
+  height: 100px;
+  cursor: move;
+  transition: transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mini-mode:hover {
+  transform: scale(1.05);
+}
+
+.mini-cover-wrapper {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.5s linear;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.mini-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.mini-controls {
+  position: absolute;
+  bottom: -50px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 25px;
+  padding: 8px 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.mini-mode:hover .mini-controls {
+  opacity: 1;
+}
+
+.mini-play-btn, .mini-next-btn, .mini-exit-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mini-play-btn:hover, .mini-next-btn:hover {
+  color: var(--primary-color);
+  transform: scale(1.15);
+}
+
+.mini-exit-btn:hover {
+  color: #ff4081;
+  transform: scale(1.15);
+}
+
+
 
 .control-bar {
   display: flex;

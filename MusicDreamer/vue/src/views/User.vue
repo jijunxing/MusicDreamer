@@ -18,10 +18,11 @@
             :default-active="$route.path"
         >
           <el-menu-item index="/user/home">首页</el-menu-item>
-          <el-menu-item index="/user/singers">歌手</el-menu-item>
           <el-menu-item index="/user/songs">歌曲</el-menu-item>
+          <el-menu-item index="/user/singers">歌手</el-menu-item>
           <el-menu-item index="/user/SongLists">歌单</el-menu-item>
           <el-menu-item index="/user/creatorCenter">创作者中心</el-menu-item>
+
         </el-menu>
       </div>
 
@@ -35,7 +36,7 @@
               @keyup.enter="handleSearch"
           >
             <template #prefix>
-              <el-icon><Search /></el-icon>
+              <el-icon class="search-icon"><Search /></el-icon>
             </template>
           </el-input>
         </div>
@@ -137,7 +138,7 @@ function login() {
 
 // 个人中心
 function goToProfile() {
-  router.push('/user/profile')
+  router.push('/user/userCenter')
 }
 
 // 我的收藏
@@ -230,26 +231,72 @@ function logout() {
 }
 
 .search-container {
+  position: relative;
   width: 220px;
-  color: #0a0a0a;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.search-container :deep(.el-input__inner) {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 30px;
-  color: #fff;
+/* 输入框获得焦点时扩展宽度 */
+.search-container:focus-within {
+  width: 260px;
+}
+
+.search-container :deep(.el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 30px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(255, 154, 60, 0.3);
+  height: 42px;
+  padding: 0 18px;
   transition: all 0.3s ease;
 }
 
-.search-container :deep(.el-input__inner:focus) {
-  width: 220px;
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 15px rgba(255, 154, 60, 0.2);
+.search-container :deep(.el-input__inner) {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 14px;
+  padding-left: 10px;
+}
+
+/* 输入框悬停效果 */
+.search-container :deep(.el-input__wrapper:hover) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 154, 60, 0.5);
+}
+
+/* 输入框获得焦点效果 */
+.search-container :deep(.el-input__wrapper.is-focus) {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 154, 60, 0.8);
+  box-shadow: 0 0 0 3px rgba(255, 154, 60, 0.2) !important;
+}
+
+/* 搜索图标样式 */
+.search-container :deep(.search-icon) {
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s ease;
+  font-size: 16px;
+}
+
+/* 输入框获得焦点时图标颜色变化 */
+.search-container:focus-within :deep(.search-icon) {
+  color: #ff9a3c;
+}
+
+/* 清除按钮样式 */
+.search-container :deep(.el-input__suffix) {
+  right: 12px;
+  pointer-events: none;
 }
 
 .search-container :deep(.el-icon) {
   color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s ease;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.search-container :deep(.el-icon:hover) {
+  color: #ff9a3c;
 }
 
 .user-area {

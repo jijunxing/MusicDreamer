@@ -20,7 +20,11 @@
         WHERE id = #{id}
     </update>
     <select id="selectById" resultType="com.example.entity.SongList">
-        SELECT song_list.*, user.username FROM song_list left join on song_list.user = user.id WHERE song_list.id = #{id}
+        SELECT song_list.*, user.username
+        FROM song_list left join user on song_list.user = user.id
+        <where>
+            song_list.id = #{id}
+        </where>
     </select>
     <select id="selectAll" resultType="com.example.entity.SongList">
         SELECT sl.*, u.username, COUNT(lm.music_id) AS musicCount

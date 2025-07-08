@@ -54,7 +54,8 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/register", "/files/download/**").permitAll()
 
                         // 特殊路径：用户更新接口（多角色可访问）
-                        .requestMatchers("/user/update","/user/selectAll","/user/selectById/**").hasAnyRole("USER", "ADMIN", "SINGER")
+                        .requestMatchers("/user/update","/user/selectAll","/user/selectById/**","/user/selectPage", "/songlist/selectPage"
+                        ).hasAnyRole("USER", "ADMIN", "SINGER")
 
                         // 多角色可访问的模块
                         .requestMatchers("/music/**", "/files/upload", "/tags/**", "/notice/**", "/songlist/**").hasAnyRole("USER", "ADMIN", "SINGER")

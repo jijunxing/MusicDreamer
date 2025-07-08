@@ -63,7 +63,7 @@
                 <div class="play-icon" @click="play(row)">
                   <el-icon><VideoPlay /></el-icon>
                 </div>
-                <div v-if="player.current.musicId === row.musicId" class="playing-indicator">
+                <div v-if="player.current!=null && player.current.musicId === row.musicId" class="playing-indicator">
                   <div class="sound-wave">
                     <span></span><span></span><span></span>
                   </div>
@@ -115,7 +115,7 @@
                     circle
                     class="action-btn"
                     @click="play(row)"
-                    :type="player.current.musicId === row.musicId ? 'primary' : ''"
+                    :type="player.current!=null && player.current.musicId === row.musicId ? 'primary' : ''"
                 >
                   <el-icon><VideoPlay /></el-icon>
                 </el-button>
@@ -191,7 +191,7 @@ const ranks = [
     fetcher: async () => {
       const res = await request.get('/music/selectAll')
       return res.code === '200'
-          ? (res.data || []).filter(song => song.tags?.some(tag => tag.name === '原创'))
+          ? (res.data || []).filter(song => song.tags?.some(tag => tag.name === '国语'))
           : []
     },
   }
