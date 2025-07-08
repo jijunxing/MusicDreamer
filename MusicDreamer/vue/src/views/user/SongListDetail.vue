@@ -11,6 +11,7 @@
         <h1 class="songlist-name">{{ songlist.name }}</h1>
 
         <div class="creator-info">
+          创建人：
           <el-avatar :src="creatorAvatar" :size="40" class="creator-avatar" />
           <span class="creator-name">{{ songlist.userName }}</span>
         </div>

@@ -287,7 +287,7 @@ onMounted(() => {
 .songlist-name {
   font-size: 16px;
   font-weight: 600;
-  color: #e0e0e0;
+  color: #39393A;
   margin-bottom: 10px;
   height: 44px;
   overflow: hidden;
