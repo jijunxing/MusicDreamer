@@ -58,6 +58,12 @@ const router = createRouter({
           path: '/search', name: 'SearchPage', component: () =>import('@/views/user/SearchPage.vue'),
           props: (route) => ({ keyword: route.query.keyword || '' }) // 自动解析 keyword 参数
         },
+        {
+          path: '/user/notices',
+          name: 'NoticeList',
+          component: () => import('@/views/user/Notices.vue'),
+          meta: { title: '系统公告' }
+        }
       ]
     },
   ]

@@ -107,6 +107,22 @@
           </template>
         </el-table-column>
 
+        <el-table-column label="喜欢" width="80" align="center">
+          <template #default="{ row }">
+            <div class="like-btn" @click.stop="toggleLikeForMusic(row)">
+              <transition name="bounce">
+                <Icon v-if="isMusicLiked(row.musicId)"
+                      icon="mdi:heart"
+                      color="#ff4081"
+                      class="like-icon liked-icon" />
+              </transition>
+              <Icon v-if="!isMusicLiked(row.musicId)"
+                    icon="mdi:heart-outline"
+                    class="like-icon" />
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column label="操作" width="150">
           <template #default="{ row }">
             <div class="music-actions">
@@ -152,10 +168,15 @@ import { ref, onMounted, computed } from 'vue'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
 import { player } from '@/utils/player'
+import {Icon} from "@iconify/vue";
 import {
   VideoPlay, Headset, Plus, More
 } from '@element-plus/icons-vue'
-
+import {
+  initUserLikes,
+  toggleLike,
+  isMusicLiked
+} from '@/utils/likeUtils'
 // 数据响应
 const musicList = ref([])
 const loading = ref(false)
@@ -265,9 +286,31 @@ const getRowClassName = ({ row }) => {
   return ''
 }
 
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  await initUserLikes()
+  await loadData()
 })
+
+const toggleLikeForMusic = async (music) => {
+  if (!music.musicId) return
+
+  try {
+    const success = await toggleLike(music.musicId)
+    if (success) {
+      ElMessage.success(`已喜欢 "${music.musicName}"`)
+    } else {
+      ElMessage.info(`已取消喜欢 "${music.musicName}"`)
+    }
+  } catch (error) {
+    if (error.message === '用户未登录') {
+      ElMessage.warning('请先登录')
+      router.push('/login')
+    } else {
+      ElMessage.error('操作失败，请重试')
+    }
+  }
+}
+
 </script>
 
 <style scoped lang="scss">
@@ -388,7 +431,7 @@ onMounted(() => {
 }
 
 .music-table-container {
-  padding: 20px 30px 40px;
+  padding: 10px 30px 40px;
 }
 
 .music-table {
@@ -399,7 +442,7 @@ onMounted(() => {
     transition: background-color 0.3s ease;
 
     &:hover {
-      background-color: rgba(255, 154, 60, 0.05) !important;
+      background-color: gainsboro !important;
 
       .play-icon {
         opacity: 1;
@@ -505,6 +548,45 @@ onMounted(() => {
   }
 }
 
+.like-btn {
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin: 0 auto;
+
+  &:hover {
+    transform: scale(1.1);
+    background: rgba(240, 240, 240, 0.8);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.like-icon {
+  font-size: 1.4rem;
+  position: absolute;
+}
+
+.liked-icon {
+  color: #ff4081 !important;
+}
+
+// 点赞动画
+.bounce-enter-active {
+  animation: bounce-in 0.5s;
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .music-meta {
   flex: 1;
   min-width: 0;
@@ -556,7 +638,7 @@ onMounted(() => {
 
 .music-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 
   .action-btn {
     width: 36px;

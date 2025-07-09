@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.exception.CustomException;
 import com.example.util.Result;
 import com.example.entity.User;
 import com.example.service.UserService;
@@ -8,6 +9,7 @@ import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin
 @RestController
@@ -67,5 +69,24 @@ public class UserController {
             @RequestParam(defaultValue = "10") Integer pageSize){
         PageInfo<User> pageInfo=userService.selectPage(username,role,pageNum,pageSize);
         return Result.success(pageInfo);
+    }
+
+    @PostMapping("/changePwd")
+    public Result changePwd(@RequestBody Map<String, String> params) {
+        String oldPassword = params.get("oldPassword");
+        String newPassword = params.get("newPassword");
+
+        if (oldPassword == null || newPassword == null) {
+            return Result.error("参数不能为空");
+        }
+
+        try {
+            userService.changePwd(oldPassword, newPassword);
+            return Result.success("密码修改成功");
+        } catch (CustomException e) {
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            return Result.error("修改密码失败，请重试");
+        }
     }
 }

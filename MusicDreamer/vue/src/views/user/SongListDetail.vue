@@ -45,34 +45,74 @@
     <div class="songlist-songs">
       <h2 class="section-title">歌曲列表</h2>
 
-      <div class="songs-container">
-        <div
-            v-for="(song, index) in songs"
-            :key="song.id"
-            class="song-item"
-            :class="{ 'playing': player.current && player.current.id === song.id }"
-        >
-          <div class="song-index">{{ index + 1 }}</div>
-
-          <div class="song-info" @click="playSong(song)">
-            <div class="song-title">{{ song.musicName }}</div>
-            <div class="song-artist">{{ song.singerName }}</div>
-          </div>
-
-          <div class="song-duration">{{ formatDuration(song.timelength) }}</div>
-
-          <div class="song-actions">
-            <el-button circle size="small" @click.stop="playSong(song)" title="播放">
+      <el-table :data="songs" :row-class-name="tableRowClassName" v-loading="loading" class="songs-table"
+                header-row-class-name="song-table-header">
+        <el-table-column type="index" width="60" />
+        <el-table-column label="歌曲信息" min-width="300">
+          <template #default="{ row }">
+            <div class="song-info">
+              <el-image
+                  :src="row.imageUrl || defaultCover"
+                  class="song-cover"
+                  :preview-src-list="[row.imageUrl || defaultCover]"
+              />
+              <div class="song-details">
+                <div class="song-title">{{ row.musicName }}</div>
+                <div class="song-artist">{{ row.singerName }}</div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="时长" width="100" align="center">
+          <template #default="{ row }">
+            {{ formatDuration(row.timelength) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="播放量" width="120" align="center">
+          <template #default="{ row }">
+            <span class="play-count">
+              {{ formatPlayCount(row.listenNumb) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="喜欢" width="80" align="center">
+          <template #default="{ row }">
+            <div class="like-btn" @click.stop="toggleLikeForMusic(row)">
+              <transition name="bounce">
+                <Icon v-if="isMusicLiked(row.musicId)"
+                      icon="mdi:heart"
+                      color="#ff4081"
+                      class="like-icon liked-icon" />
+              </transition>
+              <Icon v-if="!isMusicLiked(row.musicId)"
+                    icon="mdi:heart-outline"
+                    class="like-icon" />
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" align="center">
+          <template #default="{ row }">
+            <el-button
+                circle
+                size="small"
+                @click="playSong(row)"
+                title="播放"
+            >
               <el-icon><VideoPlay /></el-icon>
             </el-button>
-            <el-button circle size="small" @click.stop="addToPlaylist(song)" title="添加到歌单">
+            <el-button
+                circle
+                size="small"
+                @click="addToPlaylist(row)"
+                title="添加到歌单"
+            >
               <el-icon><Plus /></el-icon>
             </el-button>
-          </div>
-        </div>
-      </div>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
-  </div>
+    </div>
 </template>
 
 <script setup>
@@ -82,7 +122,12 @@ import { player } from '@/utils/player'
 import request from '@/utils/request'
 import { Headset, VideoPlay, Star, Plus, Calendar } from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
-
+import { Icon } from "@iconify/vue"
+import {
+  initUserLikes,
+  toggleLike,
+  isMusicLiked
+} from '@/utils/likeUtils'
 const route = useRoute()
 const songlistId = ref(route.params.id)
 
@@ -101,7 +146,9 @@ const songlist = ref({
 const songs = ref([])
 const loading = ref(false)
 const creatorAvatar = ref(null)
-
+const tableRowClassName = ({ row }) => {
+  return player.current && player.current.id === row.id ? 'playing-row' : '';
+};
 // 默认图片
 const defaultPlaylistCover = ref('/src/assets/imgs/default_playlist_cover.png')
 const defaultAvatar = ref('/src/assets/imgs/default_singer_avatar.png')
@@ -146,6 +193,14 @@ const formatDuration = (seconds) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+// 格式化播放量
+const formatPlayCount = (count) => {
+  if (!count) return '0'
+  return count > 10000
+      ? `${(count / 10000).toFixed(1)}万`
+      : count
+}
+
 // 播放歌曲
 const playSong = (song) => {
   player.play(song)
@@ -170,8 +225,30 @@ const getcreatorAvatar = () => {
   })
 }
 
-onMounted(() => {
-  fetchSonglistDetail()
+const toggleLikeForSong = async (song) => {
+  if (!song.musicId) return
+
+  try {
+    const success = await toggleLike(song.musicId)
+    if (success) {
+      ElMessage.success(`已喜欢 "${song.musicName}"`)
+    } else {
+      ElMessage.info(`已取消喜欢 "${song.musicName}"`)
+    }
+  } catch (error) {
+    if (error.message === '用户未登录') {
+      ElMessage.warning('请先登录')
+      router.push('/login')
+    } else {
+      ElMessage.error('操作失败，请重试')
+    }
+  }
+}
+
+
+onMounted(async () => {
+  await initUserLikes()
+  await fetchSonglistDetail()
 })
 </script>
 
@@ -337,45 +414,100 @@ onMounted(() => {
   color: #39393A;
 }
 
-.song-info {
-  flex: 1;
-  cursor: pointer;
+.songs-table {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 
-  .song-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: #39393A;
-    margin-bottom: 5px;
-  }
-
-  .song-artist {
-    font-size: 13px;
-    color: #888;
-  }
-}
-
-.song-duration {
-  width: 60px;
-  text-align: center;
-  font-size: 14px;
-  color: #888;
-}
-
-.song-actions {
-  display: flex;
-  gap: 10px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-
-  .el-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: #39393A;
+  :deep(.el-table__row) {
+    background: rgba(255, 255, 255, 0.03);
+    transition: background-color 0.3s ease;
 
     &:hover {
-      background: rgba(29, 185, 84, 0.2);
-      color: #fff;
+      background: rgba(29, 185, 84, 0.1) !important;
+    }
+
+    &.playing-row {
+      .song-title {
+        color: #1db954 !important;
+        font-weight: 600;
+      }
     }
   }
+
+  :deep(.song-table-header th) {
+    background: rgba(29, 185, 84, 0.1);
+    color: #1db954;
+    font-weight: 600;
+    font-size: 15px;
+  }
+}
+
+.song-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.song-cover {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.song-details {
+  flex: 1;
+}
+
+.song-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.play-count {
+  font-weight: 500;
+}
+
+.like-btn {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin: 0 auto;
+
+  &:hover {
+    transform: scale(1.1);
+    background: rgba(240, 240, 240, 0.8);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.like-icon {
+  font-size: 1.4rem;
+  position: absolute;
+}
+
+.liked-icon {
+  color: #ff4081 !important;
+}
+
+// 点赞动画
+.bounce-enter-active {
+  animation: bounce-in 0.5s;
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* 响应式设计 */
@@ -426,7 +558,7 @@ onMounted(() => {
     padding: 10px;
   }
 
-  .song-actions {
+  .song-actions .like-btn {
     opacity: 1;
   }
 }

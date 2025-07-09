@@ -73,6 +73,7 @@
         />
       </el-tab-pane>
 
+      <!-- 歌单部分 -->
       <el-tab-pane label="歌单" name="songlist">
         <div v-loading="loading">
           <div v-if="songlistResults.length" class="songlist-grid">
@@ -91,7 +92,7 @@
                 <div class="songlist-name">{{ songlist.name }}</div>
                 <div class="songlist-creator">创建者: {{ songlist.userName }}</div>
                 <div class="songlist-meta">
-                  <span>{{ songlist.musicCount || 0 }} 首歌曲</span>
+                  <span><el-icon><List /></el-icon> {{ songlist.musicCount || 0 }}首</span>
                   <span>{{ formatDate(songlist.createTime) }}</span>
                 </div>
               </div>
@@ -122,6 +123,7 @@ import { Search, VideoPlay, Headset } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
 import {player} from "@/utils/player";
+import { List } from '@element-plus/icons-vue';
 
 const router = useRouter()
 
@@ -497,6 +499,121 @@ onMounted(() => {
     .music-info .title {
       font-size: 16px;
     }
+  }
+}
+
+/* 歌单网格容器 */
+.songlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+/* 歌单卡片样式 */
+.songlist-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* 歌单封面图 */
+.songlist-cover {
+  width: 100%;
+  height: 280px; /* 固定高度确保统一 */
+  object-fit: cover;
+}
+
+/* 歌单信息容器 */
+.songlist-info {
+  padding: 15px;
+}
+
+/* 歌单名称 - 限制显示一行 */
+.songlist-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 创建者信息 - 限制显示一行 */
+.songlist-creator {
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 歌单元数据 */
+.songlist-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #888;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+  .songlist-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+
+  .songlist-cover {
+    height: 160px;
+  }
+}
+
+@media (max-width: 768px) {
+  .songlist-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+
+  .songlist-cover {
+    height: 150px;
+  }
+
+  .songlist-info {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .songlist-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 15px;
+  }
+
+  .songlist-cover {
+    height: 130px;
+  }
+
+  .songlist-name {
+    font-size: 14px;
+  }
+
+  .songlist-creator {
+    font-size: 13px;
   }
 }
 </style>

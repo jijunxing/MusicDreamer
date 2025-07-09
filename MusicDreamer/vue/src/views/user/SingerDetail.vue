@@ -63,6 +63,21 @@
             </span>
           </template>
         </el-table-column>
+        <el-table-column label="喜欢" width="80" align="center">
+          <template #default="{ row }">
+            <div class="like-btn" @click.stop="toggleLikeForMusic(row)">
+              <transition name="bounce">
+                <Icon v-if="isMusicLiked(row.musicId)"
+                      icon="mdi:heart"
+                      color="#ff4081"
+                      class="like-icon liked-icon" />
+              </transition>
+              <Icon v-if="!isMusicLiked(row.musicId)"
+                    icon="mdi:heart-outline"
+                    class="like-icon" />
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="120" align="center">
           <template #default="{ row }">
             <el-button
@@ -77,7 +92,7 @@
                 circle
                 size="small"
                 @click="addToPlaylist(row)"
-                title="添加到歌单"
+                title="添加到播放队列"
             >
               <el-icon><Plus /></el-icon>
             </el-button>
@@ -93,6 +108,13 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { player } from '@/utils/player'
 import request from '@/utils/request'
+import {
+  initUserLikes,
+  toggleLike,
+  isMusicLiked
+} from '@/utils/likeUtils'
+import {Icon} from "@iconify/vue";
+import {ElMessage} from "element-plus";
 
 const route = useRoute()
 const singerId = ref(route.params.id)
@@ -164,11 +186,33 @@ const addToPlaylist = (song) => {
 }
 
 onMounted(async () => {
+  await initUserLikes()
   await fetchSingerName();
   if (singer.value) {
     await fetchSongs();
   }
 });
+
+const toggleLikeForMusic = async (music) => {
+  if (!music.musicId) return
+
+  try {
+    const success = await toggleLike(music.musicId)
+    if (success) {
+      ElMessage.success(`已喜欢 "${music.musicName}"`)
+    } else {
+      ElMessage.info(`已取消喜欢 "${music.musicName}"`)
+    }
+  } catch (error) {
+    if (error.message === '用户未登录') {
+      ElMessage.warning('请先登录')
+      router.push('/login')
+    } else {
+      ElMessage.error('操作失败，请重试')
+    }
+  }
+}
+
 </script>
 
 <style scoped lang="scss">
@@ -337,6 +381,45 @@ onMounted(async () => {
 
 .play-count {
   font-weight: 500;
+}
+
+.like-btn {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin: 0 auto;
+
+  &:hover {
+    transform: scale(1.1);
+    background: rgba(240, 240, 240, 0.8);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.like-icon {
+  font-size: 1.4rem;
+  position: absolute;
+}
+
+.liked-icon {
+  color: #ff4081 !important;
+}
+
+// 点赞动画
+.bounce-enter-active {
+  animation: bounce-in 0.5s;
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* 响应式设计 */

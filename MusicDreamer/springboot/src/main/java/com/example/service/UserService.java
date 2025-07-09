@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -112,5 +113,24 @@ public class UserService {
         PageHelper.startPage(pageNum, pageSize);
         List<User> list=this.selectAll(username, role);
         return PageInfo.of(list);
+    }
+
+    public void changePwd(String oldPwd, String newPwd) {
+        // 获取当前登录用户
+        UserDetailsImpl currentUser = (UserDetailsImpl) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        System.out.println(currentUser);
+        User dbUser = currentUser.getUser();
+
+        // 验证旧密码
+        if (!passwordEncoder.matches(oldPwd, dbUser.getPassword())) {
+            throw new CustomException("旧密码错误");
+        }
+
+        // 更新密码
+        User updateUser = new User();
+        updateUser.setId(dbUser.getId());
+        updateUser.setPassword(passwordEncoder.encode(newPwd));
+        userMapper.updateById(updateUser);
     }
 }

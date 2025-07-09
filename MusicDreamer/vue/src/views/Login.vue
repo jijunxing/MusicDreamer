@@ -16,21 +16,6 @@
           :rules="rules"
           label-width="0"
         >
-          <!-- 角色选择 -->
-          <div class="role-switch">
-            <span 
-              :class="['role-option', form.role === 'USER' ? 'active' : '']"
-              @click="form.role = 'USER'"
-            >
-              用户登录
-            </span>
-            <span 
-              :class="['role-option', form.role === 'ADMIN' ? 'active' : '']"
-              @click="form.role = 'ADMIN'"
-            >
-              管理员登录
-            </span>
-          </div>
 
           <!-- 输入框区域 -->
           <el-form-item prop="username">

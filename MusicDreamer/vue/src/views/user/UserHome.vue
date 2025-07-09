@@ -28,21 +28,62 @@
       </el-carousel>
     </div>
 
+    <!-- 侧边公告栏 -->
+    <div class="announcement-sidebar" v-if="showAnnouncement">
+      <div class="sidebar-header">
+        <el-icon>
+          <Bell/>
+        </el-icon>
+        <span>最新公告</span>
+        <el-button
+            class="close-btn"
+            type="text"
+            @click="showAnnouncement = false"
+        >
+          <el-icon>
+            <Close/>
+          </el-icon>
+        </el-button>
+      </div>
+
+      <!-- 公告内容 -->
+      <div v-if="latestNotice" class="notice-content" @click="goToNoticePage">
+        <div class="notice-title">{{ latestNotice.title }}</div>
+        <div class="notice-meta">
+          <span>{{ formatDate(latestNotice.createTime) }}</span>
+          <span>{{ latestNotice.userName }}</span>
+        </div>
+        <div class="notice-excerpt">{{ truncateText(latestNotice.msg, 60) }}</div>
+        <div class="view-detail">点击查看详情
+          <el-icon>
+            <ArrowRight/>
+          </el-icon>
+        </div>
+      </div>
+    </div>
+
     <!-- 歌曲推荐栏目 -->
     <div class="recommend-section">
       <h2 class="section-title">
         推荐歌曲
         <span class="view-more" @click="navigateToSongs" style="margin-left: 10px">>>查看更多</span></h2>
       <div class="music-list">
-        <div v-for="music in musicList" :key="music.musicId" class="music-item">
+        <div v-for="music in musicList" :key="music.musicId" class="music-item"
+             @mouseenter="hoverStates[music.musicId] = true"
+             @mouseleave="hoverStates[music.musicId] = false">
           <div class="music-main">
             <div class="cover-container-song" @click="playMusic(music)">
               <img :src="music.imageUrl" alt="歌曲封面" class="music-cover"/>
               <div class="play-overlay">
-                <el-icon :size="36" color="#fff"><VideoPlay /></el-icon>
+                <el-icon :size="36" color="#fff">
+                  <VideoPlay/>
+                </el-icon>
               </div>
               <div class="play-count">
-                <el-icon><Headset /></el-icon> {{ music.listenNumb || 0 }}
+                <el-icon>
+                  <Headset/>
+                </el-icon>
+                {{ music.listenNumb || 0 }}
               </div>
             </div>
             <div class="music-info">
@@ -57,16 +98,31 @@
               </div>
             </div>
           </div>
-          <el-button
-              class="add-queue-btn"
-              type="link"
-              size="small"
-              @click.stop="addToQueue(music)"
-          >
-            <el-icon>
-              <Plus/>
-            </el-icon>
-          </el-button>
+          <transition name="fade">
+            <el-button
+                v-show="hoverStates[music.musicId]"
+                class="add-queue-btn"
+                type="link"
+                size="small"
+                @click.stop="addToQueue(music)"
+            >
+              <el-icon>
+                <Plus/>
+              </el-icon>
+            </el-button>
+          </transition>
+
+          <div class="like-btn" @click.stop="toggleLikeForMusic(music)">
+            <transition name="bounce">
+              <Icon v-if="isMusicLiked(music.musicId)"
+                    icon="mdi:heart"
+                    color="#ff4081"
+                    class="like-icon liked-icon"/>
+            </transition>
+            <Icon v-if="!isMusicLiked(music.musicId)"
+                  icon="mdi:heart-outline"
+                  class="like-icon"/>
+          </div>
         </div>
       </div>
     </div>
@@ -83,10 +139,16 @@
             <img :src="songlist.imageUrl" alt="歌单封面" class="songlist-cover"/>
             <div class="overlay">
               <div class="play-count">
-                <el-icon><Headset /></el-icon> {{ songlist.playCount || 0 }}
+                <el-icon>
+                  <Headset/>
+                </el-icon>
+                {{ songlist.playCount || 0 }}
               </div>
               <div class="music-count">
-                <el-icon><List /></el-icon> {{ songlist.musicCount || 0 }}首
+                <el-icon>
+                  <List/>
+                </el-icon>
+                {{ songlist.musicCount || 0 }}首
               </div>
             </div>
           </div>
@@ -109,6 +171,14 @@ import request from '@/utils/request'
 import {useRouter} from 'vue-router'
 import {ElMessage} from "element-plus";
 import {player} from "@/utils/player";
+import {
+  userLikesMap,
+  initUserLikes,
+  toggleLike,
+  isMusicLiked
+} from '@/utils/likeUtils'
+import {Icon} from "@iconify/vue";
+import {Bell, Close, ArrowRight} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const carouselList = ref([])
@@ -121,6 +191,7 @@ const carouselData = reactive({
   singer: {},
   songList: {}
 })
+const hoverStates = ref({});
 // 获取轮播图数据
 const fetchCarouselData = async () => {
   request.get('/carousel/selectAll').then((res) => {
@@ -140,20 +211,17 @@ const formatDate = (dateString) => {
 
 // 导航到相关内容
 const navigateToRelated = (item) => {
-  if(item.relatedType === 'SONG') {
-    request.get('music/selectById/' + item.relatedId).then(async res=>{
+  if (item.relatedType === 'SONG') {
+    request.get('music/selectById/' + item.relatedId).then(async res => {
       carouselData.music = res.data
       await player.play(carouselData.music)
       await router.push('/lyrics')
     })
-  }
-  else if(item.relatedType === 'SINGER') {
+  } else if (item.relatedType === 'SINGER') {
     router.push(`/user/singers/${item.relatedId}`)
-  }
-  else if(item.relatedType === 'SONGLIST') {
+  } else if (item.relatedType === 'SONGLIST') {
     router.push(`/user/songLists/${item.relatedId}`)
-  }
-  else
+  } else
     ElMessage.warning('相关内容不存在')
 }
 
@@ -234,11 +302,71 @@ const navigateToSongLists = () => {
   router.push('/user/songLists') // 替换为实际路由名
 }
 
-onMounted(() => {
-  fetchCarouselData()
-  fetchMusicList()
-  fetchSongList()
+onMounted(async () => {
+  await initUserLikes()
+  await fetchCarouselData()
+  await fetchMusicList()
+  await fetchSongList()
+  await fetchLatestNotice();
 })
+
+// 添加点赞切换方法
+const toggleLikeForMusic = async (music) => {
+  if (!music.musicId) return
+
+  try {
+    const success = await toggleLike(music.musicId)
+    if (success) {
+      ElMessage.success(`已喜欢 "${music.musicName}"`)
+    } else {
+      ElMessage.info(`已取消喜欢 "${music.musicName}"`)
+    }
+  } catch (error) {
+    if (error.message === '用户未登录') {
+      ElMessage.warning('请先登录')
+      router.push('/login')
+    } else {
+      ElMessage.error('操作失败，请重试')
+    }
+  }
+}
+
+const showAnnouncement = ref(true);
+const latestNotice = ref(null);
+
+// 获取最新公告
+const fetchLatestNotice = async () => {
+  try {
+    const response = await request.get('/notice/selectAll', {
+      params: {
+        pageNum: 1,
+        pageSize: 1,
+        sortField: 'create_time',
+        sortOrder: 'desc'
+      }
+    });
+
+    if (response.code === "200" && response.data.length > 0) {
+      latestNotice.value = response.data[0];
+    }
+  } catch (error) {
+    console.error('获取公告失败:', error);
+  }
+};
+
+// 文字截断方法
+const truncateText = (text, maxLength) => {
+  if (!text) return '';
+  return text.length > maxLength
+      ? text.substring(0, maxLength) + '...'
+      : text;
+};
+
+// 跳转到公告页面
+const goToNoticePage = () => {
+  router.push('/user/notices');
+};
+
 </script>
 
 <style scoped>
@@ -333,6 +461,7 @@ onMounted(() => {
 }
 
 .music-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: #fff;
@@ -409,6 +538,7 @@ onMounted(() => {
   margin-right: 3px;
   font-size: 14px;
 }
+
 .music-item:hover {
   opacity: 1;
 }
@@ -467,21 +597,88 @@ onMounted(() => {
 
 .add-queue-btn {
   position: absolute;
-  top: 10px;
+  top: 5px;
   right: 10px;
-  padding: 5px 8px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 15px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   z-index: 2;
-  transition: all 0.3s ease;
-}
-
-.add-queue-btn:hover {
-  background: #fff;
+  cursor: pointer;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0; /* 默认隐藏 */
+  visibility: hidden; /* 确保隐藏时不占用空间 */
 }
 
+.music-item:hover .add-queue-btn {
+  opacity: 1; /* 悬停时显示 */
+  visibility: visible; /* 确保显示 */
+}
+
+/* 淡入淡出动画 */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
+.like-btn {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  z-index: 2;
+  cursor: pointer;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.like-icon {
+  font-size: 1.4rem;
+}
+
+.liked-icon {
+  color: #ff4081 !important;
+}
+
+.like-btn:hover {
+  transform: scale(1.1);
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 点赞动画 */
+.bounce-enter-active {
+  animation: bounce-in 0.5s;
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 
 .songlist-grid {
   display: grid;
@@ -576,5 +773,109 @@ onMounted(() => {
 
 .play-total .el-icon {
   color: #409eff;
+}
+
+/* 侧边公告栏 */
+.announcement-sidebar {
+  position: fixed;
+  top: 100px;
+  left: 20px;
+  width: 240px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  z-index: 998;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #ebeef5;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #409eff, #66b1ff);
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+
+  .el-icon {
+    margin-right: 8px;
+    font-size: 18px;
+  }
+}
+
+.close-btn {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.8);
+
+  &:hover {
+    color: white;
+  }
+}
+
+.notice-content {
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f5f7fa;
+
+    .view-detail {
+      color: #409eff;
+    }
+  }
+}
+
+.notice-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #303133;
+  line-height: 1.4;
+}
+
+.notice-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 12px;
+}
+
+.notice-excerpt {
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.view-detail {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #909399;
+  transition: color 0.3s;
+
+  .el-icon {
+    margin-left: 4px;
+    font-size: 12px;
+  }
+}
+
+.no-notice {
+  padding: 30px 20px;
+  text-align: center;
+  color: #909399;
+  font-size: 14px;
+}
+
+/* 响应式适配 */
+@media (max-width: 1200px) {
+  .announcement-sidebar {
+    right: 10px;
+    width: 260px;
+  }
 }
 </style>
