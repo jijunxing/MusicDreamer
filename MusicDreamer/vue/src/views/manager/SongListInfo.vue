@@ -34,6 +34,7 @@
         </el-table-column>
         <el-table-column prop="about" label="简介" min-width="200" />
         <el-table-column prop="musicCount" label="音乐数" width="80" />
+        <el-table-column prop="favoriteCount" label="收藏量"/>
         <el-table-column prop="user" label="用户ID" width="100" />
         <el-table-column prop="createTime" label="创建时间" min-width="160" />
         <el-table-column label="操作" min-width="280">

@@ -15,4 +15,5 @@ public class SongList {
     private String createTime;
     private List<Music> musics;
     private Integer musicCount;
+    private Integer favoriteCount;
 } 

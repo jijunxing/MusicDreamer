@@ -74,5 +74,9 @@ public class MusicController {
         musicService.unfreezeById(id);
         return Result.success();
     }
-
+    @GetMapping("/selectTop")
+    public Result selectTop(@RequestParam(defaultValue = "10") Integer limit) {
+        List<Music> topList = musicService.selectTop(limit);
+        return Result.success(topList);
+    }
 } 

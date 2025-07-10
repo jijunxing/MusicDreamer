@@ -18,7 +18,7 @@ const router = createRouter({
         { path: 'singer', name: 'SingerInfo', component: () => import('@/views/manager/SingerInfo.vue')},
         { path: 'admin', name: 'AdminInfo', component: () => import('@/views/manager/AdminInfo.vue')},
         { path: 'music', name: 'MusicInfo', component: () => import('@/views/manager/MusicInfo.vue'),},
-        { path: 'logs', name: 'LogInfo', component: () => import('@/views/manager/CarouselInfo.vue')},
+        { path: 'carousel', name: 'carouselInfo', component: () => import('@/views/manager/CarouselInfo.vue')},
         { path: 'notice', name: 'NoticeInfo', component: () => import('@/views/manager/NoticeInfo.vue')},
         { path: 'songlist', name: 'SongListInfo', component: () => import('@/views/manager/SongListInfo.vue')},
       ]
@@ -58,6 +58,12 @@ const router = createRouter({
           path: '/search', name: 'SearchPage', component: () =>import('@/views/user/SearchPage.vue'),
           props: (route) => ({ keyword: route.query.keyword || '' }) // 自动解析 keyword 参数
         },
+        {
+          path: '/user/notices',
+          name: 'NoticeList',
+          component: () => import('@/views/user/Notices.vue'),
+          meta: { title: '系统公告' }
+        }
       ]
     },
   ]

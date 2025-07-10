@@ -3,6 +3,7 @@ package com.example.service;
 import cn.hutool.core.date.DateUtil;
 import com.example.entity.Music;
 import com.example.entity.SongList;
+import com.example.mapper.FavoriteMapper;
 import com.example.service.MusicService;
 import com.example.mapper.SongListMapper;
 import com.example.util.Result;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -22,6 +24,24 @@ public class SongListService {
     private SongListMapper songListMapper;
     @Resource
     private MusicService musicService;
+    @Resource
+    private FavoriteMapper favoriteMapper;
+
+    private Integer countFavoritesByListId(Integer listId) {
+        return favoriteMapper.countBySongListId(listId);
+    }
+    private void enrichSongListData(SongList songList) {
+        // 统计收藏量
+        Integer favoriteCount = countFavoritesByListId(songList.getId());
+        songList.setFavoriteCount(favoriteCount != null ? favoriteCount : 0);
+
+        // 关联音乐列表
+        List<Integer> musicIds = songListMapper.selectMusicIdsByListId(songList.getId());
+        List<Music> musics = musicIds.stream()
+                .map(musicService::selectById)
+                .collect(Collectors.toList());
+        songList.setMusics(musics);
+    }
 
     public int add(SongList songList) {
         songList.setCreateTime(DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
@@ -38,25 +58,15 @@ public class SongListService {
 
     public SongList selectById(Integer id) {
         SongList songList = songListMapper.selectById(id);
-        List<Integer> musicIds = songListMapper.selectMusicIdsByListId(id);
-        List<Music> musics = new ArrayList<>();
-        for (Integer musicId : musicIds) {
-            musics.add(musicService.selectById(musicId));
+        if (songList != null) {
+            enrichSongListData(songList); // 调用统一增强
         }
-        songList.setMusics(musics);
         return songList;
     }
 
     public List<SongList> selectAll(String name, Integer user) {
         List<SongList> lists = songListMapper.selectAll(name, user);
-        for (SongList songList : lists) {
-            List<Integer> musicIds = songListMapper.selectMusicIdsByListId(songList.getId());
-            List<Music> musics = new ArrayList<>();
-            for (Integer musicId : musicIds) {
-                musics.add(musicService.selectById(musicId));
-            }
-            songList.setMusics(musics);
-        }
+        lists.forEach(this::enrichSongListData); // 遍历增强
         return lists;
     }
 

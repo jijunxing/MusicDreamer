@@ -35,6 +35,9 @@
             <if test="name != null and name != ''">
                 AND sl.name LIKE CONCAT('%', #{name}, '%')
             </if>
+            <if test="user != null">
+                AND sl.user = #{user}
+            </if>
         </where>
         GROUP BY sl.id, u.username
         ORDER BY sl.id ASC

@@ -22,7 +22,7 @@
           <el-menu-item index="/user/singers">歌手</el-menu-item>
           <el-menu-item index="/user/SongLists">歌单</el-menu-item>
           <el-menu-item index="/user/creatorCenter">创作者中心</el-menu-item>
-
+          <el-menu-item index="/user/notices">公告</el-menu-item>
         </el-menu>
       </div>
 
@@ -149,6 +149,9 @@ function goToFavorites() {
 // 退出登录
 function logout() {
   localStorage.removeItem('currentUser')
+  localStorage.removeItem('jwt-token')
+  localStorage.removeItem('userLikes')
+  localStorage.removeItem('userFavorites')
   isLoggedIn.value = false
   router.push('/')
 }

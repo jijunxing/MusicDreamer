@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import com.example.entity.Music;
 import com.example.entity.Tag;
 import com.example.exception.CustomException;
+import com.example.mapper.LikeMapper;
 import com.example.mapper.MusicMapper;
 import com.example.mapper.TagMapper;
 import com.github.pagehelper.PageHelper;
@@ -30,6 +31,8 @@ import java.util.List;
 public class MusicService {
     @Resource
     MusicMapper musicMapper;
+    @Resource
+    LikeMapper likeMapper;
     @Resource
     TagMapper tagMapper;
     public void add(Music music) {
@@ -129,6 +132,11 @@ public class MusicService {
         List<Tag> tags = tagMapper.selectByMusicId(music.getMusicId());
         music.setTags(tags);
 
+        // 点赞量查询
+        Integer likeCount = likeMapper.countByMusicId(music.getMusicId());
+        music.setLikeCount(likeCount != null ? likeCount : 0);
+
+
         // 添加歌词数据（非数据库字段）
         if (music.getLyricsUrl() != null) {
             System.out.println(downloadAndParseLrc(music.getLyricsUrl()));
@@ -210,5 +218,13 @@ public class MusicService {
 
     public List<Music> selectByKeywordExcludingIds(String keyword, List<Integer> existingIds) {
         return musicMapper.selectByKeywordExcludingIds(keyword, existingIds);
+    }
+
+    public List<Music> selectTop(Integer limit) {
+        List<Music> musics = musicMapper.selectTop(limit);
+        for (Music music : musics) {
+            enrichMusicData(music);
+        }
+        return musics;
     }
 }

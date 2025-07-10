@@ -47,6 +47,7 @@
         <el-table-column prop="singerName" label="歌手用户名"/>
         <el-table-column prop="timelength" label="时长(秒)"/>
         <el-table-column prop="listenNumb" label="播放量"/>
+        <el-table-column prop="likeCount" label="点赞量"/>
         <el-table-column label="状态">
           <template #default="scope">
             <el-tag type="success" v-if="scope.row.activation === 1">激活</el-tag>

@@ -58,7 +58,7 @@
           <button class="next-btn" @click="handleNext" title="下一首">
             <Icon icon="mdi:skip-next"/>
           </button>
-          <button class="favorite-btn" @click="toggleFavorite(player.current)" :title="isLike ? '取消喜欢' : '喜欢'">
+          <button class="favorite-btn" @click="handleToggleFavorite()">
             <transition name="bounce">
               <Icon v-if="isLike" icon="mdi:heart" color="#ff4081"/>
             </transition>
@@ -118,7 +118,13 @@ import {player} from "@/utils/player"
 import {Icon} from '@iconify/vue'
 import defaultCover from "@/assets/imgs/default_cover.svg";
 import request from "@/utils/request";
-import {isMusicLiked, updateLikeStatus} from '@/utils/likeUtils';
+import {
+  userLikesMap,
+  initUserLikes,
+  toggleLike,
+  isMusicLiked
+} from '@/utils/likeUtils'
+import {ElMessage} from "element-plus";
 
 const showPlaylist = ref(false)
 const currentTime = ref(0)
@@ -137,16 +143,14 @@ const miniModePosition = ref({x: window.innerWidth - 100, y: 100})
 const isDragging = ref(false)
 const dragStartPos = ref({x: 0, y: 0})
 
-const userLikesMap = ref({}) // 存储 { musicId: likeId } 的映射
 const currentUserId = ref(null)
 
 // 使用计算属性获取当前歌曲点赞状态
 const isLike = computed(() => {
-  if (player.current && player.current.musicId) {
-    return !!userLikesMap.value[player.current.musicId];
-  }
-  return false;
-});
+  return player.current?.musicId
+      ? isMusicLiked(player.current.musicId)
+      : false
+})
 
 const handleLoadedMetadata = () => {
   if (player.audio) {
@@ -177,7 +181,7 @@ const syncState = () => {
 };
 
 // 注册状态更新监听器
-onMounted(() => {
+onMounted(async () => {
   player.setAudioElement(bgMusic.value)
   player.listeners.add(syncState)
   syncState()
@@ -194,20 +198,7 @@ onMounted(() => {
   }
 
   // 获取用户所有点赞记录
-  if (currentUserId.value) {
-    request.get('/like/selectAll', {
-      params: {userId: currentUserId.value}
-    }).then(res => {
-      if (res.data) {
-        const newLikesMap = {};
-        res.data.forEach(like => {
-          newLikesMap[like.musicId] = like.id;
-        });
-        userLikesMap.value = newLikesMap;
-        localStorage.setItem('userLikes', JSON.stringify(newLikesMap));
-      }
-    });
-  }
+  await initUserLikes()
 
   // 添加全局事件监听
   window.addEventListener('storage', (event) => {
@@ -526,40 +517,31 @@ watch(() => player.current, (newSong) => {
   }
 }, {immediate: true});
 
-const toggleFavorite = async (song = null) => {
-  const targetSong = song || player.current;
-  if (!targetSong || !targetSong.musicId) return;
+const handleToggleFavorite = async (song = null) => {
+  const targetSong = song || player.current
+  if (!targetSong?.musicId) return
 
-  // 未登录处理
-  if (!currentUserId.value) {
-    alert('请先登录');
-    return router.push('/login');
+  try {
+    const success = await toggleLike(targetSong.musicId)
+    if (success) {
+      ElMessage.success('已添加喜欢')
+    } else {
+      ElMessage.info('已取消喜欢')
+    }
+  } catch (error) {
+    if (error.message === '用户未登录') {
+      alert('请先登录')
+      router.push('/login')
+    } else {
+      ElMessage.error('操作失败，请重试')
+    }
   }
-
-  const musicId = targetSong.musicId;
-  const isLiked = !!userLikesMap.value[musicId];
-  if (isLiked) {
-    await request.delete(`/like/delete/${userLikesMap.value[musicId]}`);
-    delete userLikesMap.value[musicId];
-  } else {
-    const res = await request.post('/like/add', {
-      userId: currentUserId.value,
-      musicId: musicId
-    });
-    userLikesMap.value = {
-      ...userLikesMap.value,
-      [musicId]: res.data
-    };
-  }
-
-  // 更新本地存储
-  updateLikeStatus(musicId, userLikesMap.value[musicId]);
-};
+}
 
 // 播放列表中的点赞方法
 const toggleLikeInPlaylist = (song) => {
-  toggleFavorite(song);
-};
+  handleToggleFavorite(song)
+}
 </script>
 
 <style scoped>
@@ -1028,8 +1010,14 @@ button:hover {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 点赞动画 */
@@ -1038,8 +1026,16 @@ button:hover {
 }
 
 @keyframes bounce-in {
-  0% { transform: scale(0.5); opacity: 0; }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>
