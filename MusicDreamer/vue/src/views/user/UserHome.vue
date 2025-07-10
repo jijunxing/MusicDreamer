@@ -244,15 +244,10 @@ const navigateToRelated = (item) => {
 
 // 获取推荐歌曲
 const fetchMusicList = async () => {
-  const response = await request.get('/music/selectPage', {
-    params: {
-      pageNum: 1,
-      pageSize: 12,
-    }
-  })
+  const response = await request.get('/music/selectTop?limit=12')
 
   if (response.code === "200") {
-    musicList.value = response.data.list.map(music => ({
+    musicList.value = response.data.map(music => ({
       ...music,
       tags: music.tags || []
     }))

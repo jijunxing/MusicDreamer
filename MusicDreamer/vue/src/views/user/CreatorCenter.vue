@@ -717,7 +717,7 @@ onMounted(() => {
 .form-columns {
   display: flex;
   gap: 20px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .form-left,
@@ -745,7 +745,7 @@ onMounted(() => {
 }
 
 /* 响应式设计 */
-@media (max-width: 992px) {
+@media (max-width: 768px) {
   .creator-header {
     flex-direction: column;
     align-items: flex-start;

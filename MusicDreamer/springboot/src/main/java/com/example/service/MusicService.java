@@ -86,8 +86,9 @@ public class MusicService {
     }
 
     public void addWithTags(Music music) {
+        music.setCreateTime(DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
         musicMapper.insert(music);
-        if (music.getTags() != null) {
+        if (music.getTags() != null && music.getTags().size() > 0) {
             List<Integer> tagIds = music.getTags().stream().map(Tag::getId).toList();
             musicMapper.insertMusicTags(music.getMusicId(), tagIds);
         }

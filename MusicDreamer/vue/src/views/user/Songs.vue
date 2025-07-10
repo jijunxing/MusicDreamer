@@ -207,7 +207,7 @@ const ranks = [
   },
   {
     key: 'original',
-    title: '原创榜',
+    title: '国语榜',
     cover: 'https://images.unsplash.com/photo-1453733190371-0a9bedd82893?q=80',
     fetcher: async () => {
       const res = await request.get('/music/selectAll')

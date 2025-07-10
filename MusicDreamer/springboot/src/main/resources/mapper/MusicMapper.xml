@@ -95,6 +95,8 @@
     <select id="selectTop" resultType="com.example.entity.Music">
         select music.* , user.username as singerName from music left join user on user.id = music.from_singer
         order by listen_numb desc
-        limit 10
+        <if test="limit!=null">
+        limit #{limit}
+        </if>
     </select>
 </mapper> 
