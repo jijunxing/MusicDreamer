@@ -34,9 +34,7 @@
             <span>修改密码</span>
           </el-menu-item>
           <el-menu-item index="favorites">
-            <el-icon>
-              <StarFilled/>
-            </el-icon>
+            <Icon icon="mdi:heart-outline" style="margin-left: 3px; font-size: 1.2rem; margin-right: 8px"></Icon>
             <span>我的喜欢</span>
           </el-menu-item>
           <el-menu-item index="playlists">
@@ -193,6 +191,10 @@
                         :src="row.imageUrl || defaultCover"
                         class="song-cover"
                         :preview-src-list="[row.imageUrl || defaultCover]"
+                        :preview-teleported="true"
+                        append-to-body
+                        style="width: 50px; height: 50px; border-radius: 10%; cursor: pointer"
+                        fit="cover"
                     />
                     <div class="song-details">
                       <div class="song-title">{{ row.musicName }}</div>
@@ -255,7 +257,6 @@
           </div>
         </div>
 
-        <!-- 我的歌单 -->
         <!-- 我的歌单 -->
         <div v-if="activeTab === 'playlists'" class="playlists-section">
           <div class="playlists-header">
@@ -488,7 +489,7 @@
 import {ref, reactive, computed, onMounted, watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {User, Lock, StarFilled, Folder, Warning, Plus, VideoPlay, Headset, More, Delete, Edit} from '@element-plus/icons-vue'
-import {ElMessage} from 'element-plus'
+import {ElMessage, ElMessageBox} from 'element-plus'
 import request from '@/utils/request'
 import UploadFile from '@/components/UploadFile.vue'
 import {player} from "@/utils/player";

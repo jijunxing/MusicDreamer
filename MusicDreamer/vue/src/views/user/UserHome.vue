@@ -159,6 +159,18 @@
               <span class="creator">创建者: {{ songlist.userName }}</span>
             </div>
           </div>
+          <!-- 收藏按钮 -->
+          <div class="favorite-btn" @click.stop="toggleFavoriteForSonglist(songlist)">
+            <transition name="bounce">
+              <Icon v-if="isSonglistFavorited(songlist.id)"
+                    icon="mdi:star"
+                    color="#ffc107"
+                    class="favorite-icon favorited-icon"/>
+            </transition>
+            <Icon v-if="!isSonglistFavorited(songlist.id)"
+                  icon="mdi:star-outline"
+                  class="favorite-icon"/>
+          </div>
         </div>
       </div>
     </div>
@@ -177,6 +189,11 @@ import {
   toggleLike,
   isMusicLiked
 } from '@/utils/likeUtils'
+import {
+  initUserFavorites,
+  toggleFavorite as toggleSonglistFavorite,
+  isSonglistFavorited
+} from '@/utils/favoriteUtils'
 import {Icon} from "@iconify/vue";
 import {Bell, Close, ArrowRight} from '@element-plus/icons-vue'
 
@@ -304,6 +321,7 @@ const navigateToSongLists = () => {
 
 onMounted(async () => {
   await initUserLikes()
+  await initUserFavorites()
   await fetchCarouselData()
   await fetchMusicList()
   await fetchSongList()
@@ -320,6 +338,27 @@ const toggleLikeForMusic = async (music) => {
       ElMessage.success(`已喜欢 "${music.musicName}"`)
     } else {
       ElMessage.info(`已取消喜欢 "${music.musicName}"`)
+    }
+  } catch (error) {
+    if (error.message === '用户未登录') {
+      ElMessage.warning('请先登录')
+      router.push('/login')
+    } else {
+      ElMessage.error('操作失败，请重试')
+    }
+  }
+}
+
+//歌单收藏切换
+const toggleFavoriteForSonglist = async (songlist) => {
+  if (!songlist.id) return
+
+  try {
+    const success = await toggleSonglistFavorite(songlist.id)
+    if (success) {
+      ElMessage.success(`已收藏歌单 "${songlist.name}"`)
+    } else {
+      ElMessage.info(`已取消收藏歌单 "${songlist.name}"`)
     }
   } catch (error) {
     if (error.message === '用户未登录') {
@@ -773,6 +812,58 @@ const goToNoticePage = () => {
 
 .play-total .el-icon {
   color: #409eff;
+}
+
+/* 新增收藏按钮样式 */
+.favorite-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  cursor: pointer;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.favorite-icon {
+  font-size: 1.4rem;
+}
+
+.favorited-icon {
+  color: #ffc107 !important;
+}
+
+.favorite-btn:hover {
+  transform: scale(1.1);
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 收藏动画 */
+.bounce-enter-active {
+  animation: bounce-in 0.5s;
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* 侧边公告栏 */

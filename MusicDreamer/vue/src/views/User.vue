@@ -149,6 +149,9 @@ function goToFavorites() {
 // 退出登录
 function logout() {
   localStorage.removeItem('currentUser')
+  localStorage.removeItem('jwt-token')
+  localStorage.removeItem('userLikes')
+  localStorage.removeItem('userFavorites')
   isLoggedIn.value = false
   router.push('/')
 }

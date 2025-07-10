@@ -29,8 +29,13 @@
           <el-button type="primary" round @click="playAllSongs" :disabled="songs.length === 0">
             <el-icon><VideoPlay /></el-icon> 播放全部
           </el-button>
-          <el-button type="info" round>
-            <el-icon><Star /></el-icon> 收藏
+          <el-button type="info" round :class="{'favorited': isFavorited}" @click.stop="toggleFavoriteForSonglist">
+            <transition name="bounce">
+              <Icon v-if="isFavorited" icon="mdi:star" color="#ffc107" class="star-icon"/>
+              <Icon v-else icon="mdi:star-outline" color="black" class="star-icon"/>
+            </transition>
+            {{ isFavorited ? '已收藏' : '未收藏' }}
+            <!-- Iconify图标（收藏状态时显示） -->
           </el-button>
         </div>
 
@@ -128,6 +133,11 @@ import {
   toggleLike,
   isMusicLiked
 } from '@/utils/likeUtils'
+import {
+  initUserFavorites,
+  toggleFavorite as toggleSonglistFavorite,
+  isSonglistFavorited
+} from '@/utils/favoriteUtils'
 const route = useRoute()
 const songlistId = ref(route.params.id)
 
@@ -152,7 +162,7 @@ const tableRowClassName = ({ row }) => {
 // 默认图片
 const defaultPlaylistCover = ref('/src/assets/imgs/default_playlist_cover.png')
 const defaultAvatar = ref('/src/assets/imgs/default_singer_avatar.png')
-
+const isFavorited = ref(false) // 当前歌单的收藏状态
 // 获取歌单详情
 const fetchSonglistDetail = async () => {
   loading.value = true
@@ -245,10 +255,33 @@ const toggleLikeForSong = async (song) => {
   }
 }
 
+const toggleFavoriteForSonglist = async () => {
+  if (!songlistId.value) return
+
+  try {
+    const success = await toggleSonglistFavorite(songlistId.value)
+    isFavorited.value = success // 更新收藏状态
+
+    if (success) {
+      ElMessage.success(`已收藏歌单 "${songlist.value.name}"`)
+    } else {
+      ElMessage.info(`已取消收藏歌单 "${songlist.value.name}"`)
+    }
+  } catch (error) {
+    if (error.message === '用户未登录') {
+      ElMessage.warning('请先登录')
+      router.push('/login')
+    } else {
+      ElMessage.error('操作失败，请重试')
+    }
+  }
+}
 
 onMounted(async () => {
   await initUserLikes()
   await fetchSonglistDetail()
+  await initUserFavorites()
+  isFavorited.value = isSonglistFavorited(songlistId.value)
 })
 </script>
 
@@ -562,4 +595,35 @@ onMounted(async () => {
     opacity: 1;
   }
 }
+
+/* 收藏按钮样式 */
+.songlist-actions .el-button.favorited {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+
+  &:hover {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.5);
+  }
+}
+
+.star-icon {
+  position: relative;
+  top: 1px;
+  margin-left: 0px;
+  font-size: 1.2rem;
+}
+
+/* 收藏动画 */
+.bounce-enter-active {
+  animation: bounce-in 0.5s;
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 </style>
