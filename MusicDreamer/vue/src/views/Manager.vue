@@ -32,8 +32,6 @@
         <el-menu
             router
             style="border: none"
-            :default-active="$route.path"
-            :default-openeds="['/home', '2']"
         >
           <el-menu-item index="/admin/home">
             <el-icon><HomeFilled /></el-icon>
@@ -44,7 +42,7 @@
               <el-icon><OfficeBuilding /></el-icon>
               <span>系统管理</span>
             </template>
-            <el-menu-item index="/admin/logs">
+            <el-menu-item index="/admin/carousel">
               <el-icon><Picture /></el-icon>
               <span>轮播图管理</span>
             </el-menu-item>
@@ -115,6 +113,9 @@ const data = reactive({
 const logout = () => {
   localStorage.removeItem('currentUser')
   localStorage.removeItem('jwt_token')
+  localStorage.removeItem('userLikes')
+  localStorage.removeItem('userFavorites')
+  router.push('/login')
 }
 
 const updateUser = () => {
@@ -141,6 +142,7 @@ const handleAvatarError = () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .main-header {
@@ -172,13 +174,11 @@ const handleAvatarError = () => {
 }
 
 .logo-text {
-  font-size: 24px;
-  font-weight: bold;
-  background: linear-gradient(to right, #ff9a3c, #ffd166);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 10px rgba(255, 154, 60, 0.5);
+  font-size: 22px;
+  font-weight: 700;
+  color: orange;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 
@@ -191,19 +191,20 @@ const handleAvatarError = () => {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 0 10px;
+  padding: 6px 14px;
+  background-color: rgba(255, 255, 255, 0.15);
   border-radius: 20px;
+  backdrop-filter: blur(4px);
   transition: background-color 0.3s;
 }
 
 .user-info:hover {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: rgba(255, 255, 255, 0.25);
 }
 
-
-
 .admin-text {
-  color: #F56C6C;
+  font-weight: 600;
+  color: #c0392b;
 }
 
 .avatar-container {
@@ -222,7 +223,7 @@ const handleAvatarError = () => {
 }
 
 .user-avatar:hover {
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .user-name {

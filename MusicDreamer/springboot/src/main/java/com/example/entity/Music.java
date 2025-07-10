@@ -20,5 +20,5 @@ public class Music {
     private Integer listenNumb;
     private List<Tag> tags;
     private List<Integer> tagIds; // 非数据库字段，用于接收前端传来的标签
-
+    private Integer likeCount;
 } 

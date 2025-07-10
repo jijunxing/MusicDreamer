@@ -4,6 +4,7 @@ import com.example.entity.Like;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -18,4 +19,6 @@ public interface LikeMapper {
     List<Like> selectAll(Integer userId);
     @Delete("delete from like_music where user_id = #{userId} and music_id = #{musicId}")
     void deleteByUserAndSong(Integer userId, Integer musicId);
+    @Select("select count(1) from like_music where music_id = #{musicId}")
+    Integer countByMusicId(Integer musicId);
 }

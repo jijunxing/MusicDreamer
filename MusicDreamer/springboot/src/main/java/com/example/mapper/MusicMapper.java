@@ -25,4 +25,6 @@ public interface MusicMapper {
     void unfreezeById(Integer id);
 
     List<Music> selectByKeywordExcludingIds(String keyword, List<Integer> existingIds);
+
+    List<Music> selectTop(Integer limit);
 }

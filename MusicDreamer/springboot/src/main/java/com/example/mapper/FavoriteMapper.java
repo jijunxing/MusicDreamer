@@ -4,6 +4,7 @@ import com.example.entity.Favorite;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -18,4 +19,6 @@ public interface FavoriteMapper {
     List<Favorite> selectAll(Integer userId);
     @Delete("delete from favorite_songlist where user_id = #{userId} and songlist_id = #{songlistId}")
     void deleteByUserAndSong(Integer userId, Integer listId);
+    @Select("select count(1) from favorite_songlist where songlist_id = #{songlistId}")
+    Integer countBySongListId(Integer listId);
 }
