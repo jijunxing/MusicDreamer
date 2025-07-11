@@ -197,6 +197,7 @@ const del = (id) => {
 
 const frozenAccount = (row) => {
   row.activation = 0
+  row.password = ''
   request.put('/user/update', row).then(res => {
     if (res.code === '200') {
       ElMessage.success('冻结成功')
@@ -209,6 +210,7 @@ const frozenAccount = (row) => {
 
 const unfrozenAccount = (row) => {
   row.activation = 1
+  row.password = ''
   request.put('/user/update', row).then(res => {
     if (res.code === '200') {
       ElMessage.success('解冻成功')

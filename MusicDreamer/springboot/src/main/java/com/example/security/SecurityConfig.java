@@ -53,7 +53,6 @@ public class SecurityConfig {
                         // 公开路径
                         .requestMatchers("/login", "/register", "/files/download/**").permitAll()
 
-                        // 特殊路径：用户更新接口（多角色可访问）
                         .requestMatchers("/user/update","/user/selectAll","/user/selectById/**","/user/selectPage", "/songlist/selectPage",
                         "/user/changePwd").hasAnyRole("USER", "ADMIN", "SINGER")
 

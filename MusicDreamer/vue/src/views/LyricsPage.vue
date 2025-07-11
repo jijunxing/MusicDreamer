@@ -203,7 +203,7 @@ onUnmounted(() => {
 const updateLyricsState = () => {
   if (!player.audio) return
   duration.value = player.audio.duration
-  // 歌词滚动逻辑（原有代码）
+  // 歌词滚动逻辑
   const time = player.audio.currentTime
   if (!parsedLyrics.value.length) return
   let low = 0, high = parsedLyrics.value.length - 1
